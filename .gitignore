@@ -1,0 +1,9 @@
+# fotos baixadas do Drive para a versao offline: nunca vao para o repositorio
+offline/fotos/*
+!offline/fotos/LEIA-ME.txt
+offline/lista.js
+
+# lixo do sistema
+Thumbs.db
+desktop.ini
+.DS_Store

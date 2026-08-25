@@ -1,0 +1,4 @@
+Extraia aqui dentro o conteudo do ZIP baixado do Drive, depois rode
+gerar-lista.ps1 na pasta de cima.
+
+Pode manter as subpastas do jeito que vierem — o gerador varre tudo.

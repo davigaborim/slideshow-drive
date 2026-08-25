@@ -1,0 +1,874 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Slideshow (offline)</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;background:#000;overflow:hidden}
+body{
+  font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color:#fff;background:#000;
+  -webkit-font-smoothing:antialiased;
+}
+body.sem-cursor{cursor:none}
+
+/* as tres telas: menu, galeria, slideshow */
+#menu,#galeria,#palco{display:none}
+body.tela-menu #menu{display:flex}
+body.tela-galeria #galeria{display:block}
+body.tela-slideshow #palco{display:block}
+
+/* ============================================================= slideshow */
+#palco{position:fixed;inset:0;background:#000}
+.camada{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  object-fit:contain;
+  opacity:0;
+  transition:opacity var(--fade,1500ms) ease-in-out;
+  will-change:opacity;
+}
+.camada.ativa{opacity:1}
+/* troca manual (setas/clique): sem transicao nenhuma */
+.camada.instantaneo{transition:none}
+
+#selo{
+  position:fixed;top:28px;left:28px;
+  display:none;align-items:center;gap:9px;
+  padding:9px 16px 9px 13px;
+  background:rgba(12,12,14,.62);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  font-size:13px;letter-spacing:.02em;
+  z-index:5;
+}
+body.tela-slideshow #selo.on{display:flex}
+#selo .pt{
+  width:7px;height:7px;border-radius:50%;
+  background:#6ee7a8;box-shadow:0 0 10px #6ee7a8;
+  animation:pisca 2.2s ease-in-out infinite;
+}
+@keyframes pisca{0%,100%{opacity:1}50%{opacity:.35}}
+
+#hud,#nome{
+  position:fixed;bottom:26px;
+  font-size:12.5px;letter-spacing:.05em;
+  color:rgba(255,255,255,.42);
+  transition:opacity .6s;pointer-events:none;
+  display:none;z-index:5;
+}
+#hud{right:30px;font-variant-numeric:tabular-nums}
+#nome{
+  left:30px;max-width:52vw;letter-spacing:.01em;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+body.tela-slideshow #hud,body.tela-slideshow #nome{display:block}
+.sumiu{opacity:0 !important}
+
+/* pausa: pilula discreta no topo, nao um circulo gigante */
+#pausa{
+  position:fixed;top:26px;left:50%;transform:translateX(-50%);
+  display:none;align-items:center;gap:7px;
+  padding:7px 15px;
+  background:rgba(12,12,14,.6);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  font-size:11.5px;letter-spacing:.11em;text-transform:uppercase;
+  color:rgba(255,255,255,.62);
+  z-index:6;
+}
+body.tela-slideshow #pausa.on{display:flex}
+
+#dica{
+  position:fixed;top:28px;right:30px;
+  font-size:12px;letter-spacing:.05em;
+  color:rgba(255,255,255,.34);
+  transition:opacity 1.2s;pointer-events:none;
+  display:none;z-index:5;
+}
+body.tela-slideshow #dica{display:block}
+#dica b{font-weight:600;color:rgba(255,255,255,.55)}
+
+/* botao voltar durante o slideshow: some junto com o cursor */
+#bt-voltar{
+  position:fixed;top:24px;left:28px;
+  display:none;
+  padding:9px 17px;
+  background:rgba(12,12,14,.6);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:999px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  color:rgba(255,255,255,.75);
+  font:inherit;font-size:12.5px;letter-spacing:.03em;
+  cursor:pointer;z-index:7;
+  transition:opacity .45s,background .2s;
+}
+body.tela-slideshow #bt-voltar{display:block}
+body.tela-slideshow.sem-cursor #bt-voltar{opacity:0;pointer-events:none}
+#bt-voltar:hover{background:rgba(30,30,34,.85)}
+/* com selo de IA na esquerda, o voltar desce para nao encostar */
+body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
+
+/* ================================================================== menu */
+#menu{
+  position:fixed;inset:0;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:0;padding:40px;text-align:center;
+  background:
+    radial-gradient(1100px 620px at 50% -12%, #1b1b21 0%, #0a0a0c 62%, #000 100%);
+}
+#menu .marca{
+  font-size:clamp(28px,4.6vw,50px);
+  font-weight:600;letter-spacing:-.022em;line-height:1.1;
+  background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,.62));
+  -webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;color:#fff;
+}
+#menu .conta{
+  margin-top:14px;
+  font-size:13.5px;letter-spacing:.04em;
+  color:rgba(255,255,255,.42);
+  font-variant-numeric:tabular-nums;
+}
+#menu .botoes{
+  margin-top:46px;
+  display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
+}
+.bt{
+  display:flex;flex-direction:column;align-items:flex-start;gap:3px;
+  width:270px;padding:22px 24px;
+  background:rgba(255,255,255,.045);
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:15px;
+  color:#fff;font:inherit;text-align:left;
+  cursor:pointer;
+  transition:background .2s,border-color .2s,transform .2s;
+}
+.bt:hover{background:rgba(255,255,255,.085);border-color:rgba(255,255,255,.22);transform:translateY(-2px)}
+.bt:active{transform:translateY(0)}
+.bt.principal{background:rgba(255,255,255,.93);border-color:transparent;color:#0b0b0d}
+.bt.principal:hover{background:#fff}
+.bt .ico{font-size:15px;opacity:.55;margin-bottom:7px}
+.bt .rot{font-size:15.5px;font-weight:550;letter-spacing:-.005em}
+.bt .sub{font-size:12.5px;color:rgba(255,255,255,.42);letter-spacing:.01em}
+.bt.principal .sub{color:rgba(0,0,0,.5)}
+#menu .rodape{
+  margin-top:44px;
+  font-size:12px;letter-spacing:.04em;
+  color:rgba(255,255,255,.26);
+}
+
+/* =============================================================== galeria */
+#galeria{
+  position:fixed;inset:0;
+  overflow-y:auto;overflow-x:hidden;
+  background:#08080a;
+  padding:74px 22px 48px;
+}
+#barra{
+  position:fixed;top:0;left:0;right:0;height:58px;
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:0 20px;
+  background:rgba(8,8,10,.82);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-bottom:1px solid rgba(255,255,255,.07);
+  z-index:8;
+}
+#galeria-conta{
+  font-size:12.5px;letter-spacing:.05em;
+  color:rgba(255,255,255,.4);
+  font-variant-numeric:tabular-nums;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.bt-barra{
+  flex:none;
+  padding:8px 15px;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.12);
+  border-radius:9px;
+  color:rgba(255,255,255,.82);
+  font:inherit;font-size:12.5px;letter-spacing:.02em;
+  cursor:pointer;transition:background .2s,border-color .2s;
+}
+.bt-barra:hover{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.24)}
+.bt-barra.destaque{background:rgba(255,255,255,.92);border-color:transparent;color:#0b0b0d;font-weight:550}
+.bt-barra.destaque:hover{background:#fff}
+
+#grade{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(188px,1fr));
+  gap:9px;
+  max-width:1560px;margin:0 auto;
+}
+.cel{
+  position:relative;aspect-ratio:1;
+  background:#141416;
+  border:1px solid rgba(255,255,255,.06);
+  border-radius:11px;overflow:hidden;
+  cursor:pointer;
+}
+.cel img{
+  width:100%;height:100%;object-fit:cover;
+  opacity:0;transition:opacity .35s,transform .35s;
+}
+.cel img.ok{opacity:1}
+.cel:hover img{transform:scale(1.055)}
+.cel:hover{border-color:rgba(255,255,255,.26)}
+.cel .num{
+  position:absolute;bottom:0;left:0;right:0;
+  padding:22px 9px 7px;
+  background:linear-gradient(transparent,rgba(0,0,0,.72));
+  font-size:11px;letter-spacing:.05em;
+  color:rgba(255,255,255,.62);
+  font-variant-numeric:tabular-nums;
+  opacity:0;transition:opacity .25s;
+}
+.cel:hover .num{opacity:1}
+.cel .tag{
+  position:absolute;top:7px;left:7px;
+  padding:3px 8px;
+  background:rgba(8,8,10,.72);
+  border:1px solid rgba(110,231,168,.4);
+  border-radius:999px;
+  font-size:9.5px;letter-spacing:.09em;text-transform:uppercase;
+  color:#8ef0bb;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+}
+#grade .vazio{
+  grid-column:1/-1;padding:60px 0;text-align:center;
+  font-size:13px;color:rgba(255,255,255,.34);
+}
+
+/* ============================================== carregando / erro / toast */
+#aviso{
+  position:fixed;inset:0;z-index:20;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;padding:40px;text-align:center;
+  background:#000;
+  transition:opacity .8s;
+}
+#aviso.off{opacity:0;pointer-events:none}
+#aviso .giro{
+  width:34px;height:34px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.14);
+  border-top-color:rgba(255,255,255,.75);
+  animation:gira .9s linear infinite;
+}
+@keyframes gira{to{transform:rotate(360deg)}}
+#aviso h1{font-size:15px;font-weight:500;letter-spacing:.02em;color:rgba(255,255,255,.72)}
+#aviso p{font-size:13px;line-height:1.65;color:rgba(255,255,255,.42);max-width:620px}
+#aviso code{
+  font-family:ui-monospace,"Cascadia Code",Consolas,monospace;
+  font-size:12px;background:rgba(255,255,255,.07);
+  padding:2px 6px;border-radius:4px;color:rgba(255,255,255,.7);
+}
+#aviso.erro .giro{display:none}
+
+#toast{
+  position:fixed;bottom:26px;left:50%;
+  transform:translate(-50%,18px);
+  padding:11px 20px;
+  background:rgba(12,12,14,.72);
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:999px;
+  backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
+  font-size:13px;letter-spacing:.01em;
+  opacity:0;pointer-events:none;z-index:9;
+  transition:opacity .45s,transform .45s;
+}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:640px){
+  #selo{top:16px;left:16px;font-size:12px}
+  #dica{display:none}
+  #nome{max-width:40vw}
+  .bt{width:100%;max-width:330px}
+  #grade{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:7px}
+  #galeria{padding:70px 12px 40px}
+}
+</style>
+</head>
+<body>
+<!-- ---------------------------------------------------------- slideshow -->
+<div id="palco">
+  <img class="camada" id="a" alt="">
+  <img class="camada" id="b" alt="">
+</div>
+
+<div id="selo"><span class="pt"></span><span id="selo-txt">processada com IA</span></div>
+<div id="nome"></div>
+<div id="hud"></div>
+<div id="pausa">&#10073;&#10073; pausado</div>
+<div id="dica"><b>F11</b> tela cheia &nbsp;&middot;&nbsp; <b>espa&ccedil;o</b> pausa &nbsp;&middot;&nbsp; <b>Esc</b> volta</div>
+
+<!-- ------------------------------------------------------------- menu -->
+<div id="menu">
+  <div class="marca" id="menu-titulo">Fotos</div>
+  <div class="conta"><span id="menu-conta">0</span> imagens na pasta</div>
+  <div class="botoes">
+    <button class="bt principal" id="bt-slideshow">
+      <span class="ico">&#9654;</span>
+      <span class="rot">Iniciar slideshow</span>
+      <span class="sub">passa sozinho, em ordem aleat&oacute;ria</span>
+    </button>
+    <button class="bt" id="bt-galeria">
+      <span class="ico">&#9638;</span>
+      <span class="rot">Navegar nas imagens</span>
+      <span class="sub">ver todas em grade e escolher</span>
+    </button>
+  </div>
+  <div class="rodape" id="menu-rodape"></div>
+</div>
+
+<!-- ---------------------------------------------------------- galeria -->
+<div id="galeria">
+  <div id="barra">
+    <button class="bt-barra" id="bt-voltar-menu">&lsaquo;&nbsp; Voltar</button>
+    <span id="galeria-conta"></span>
+    <button class="bt-barra destaque" id="bt-slideshow-2">&#9654;&nbsp; Slideshow</button>
+  </div>
+  <div id="grade"></div>
+</div>
+
+<!-- voltar, no canto, durante o slideshow -->
+<button id="bt-voltar">&lsaquo;&nbsp; Voltar</button>
+
+<div id="toast"></div>
+
+<!-- ------------------------------------------------ carregando / erro -->
+<div id="aviso">
+  <div class="giro"></div>
+  <h1 id="aviso-t">Carregando as fotos&hellip;</h1>
+  <p id="aviso-p"></p>
+</div>
+<script src="config.js"></script>
+<script src="lista.js"></script>
+<script>
+/* Fonte das fotos: pasta local ./fotos (com subpastas), listada em lista.js.
+   Cada item vem como caminho relativo, ex.: "Dia 1/bastidores/foto.jpg". */
+function carregarFotos() {
+  var l = window.FOTOS_LOCAIS || [];
+  return Promise.resolve(l.map(function (caminho, i) {
+    var partes = caminho.split('/');
+    var nome = partes.pop();
+    // codifica cada pedaco separado, para nao escapar as barras
+    var url = 'fotos/' + caminho.split('/').map(encodeURIComponent).join('/');
+    return {
+      id: 'local-' + i + '-' + caminho,
+      nome: nome,
+      pasta: partes.join(' / '),
+      criado: i,
+      url: url,
+      urlThumb: url   // offline nao tem miniatura: a propria imagem serve
+    };
+  }));
+}
+</script>
+<script>
+/* =========================================================================
+   Motor do slideshow - compartilhado pelas 3 versoes (web / apps-script / offline).
+   Depende de uma funcao global carregarFotos() que devolve uma Promise com:
+     [{ id, nome, pasta?, url, urlThumb?, urlAlt? }, ...]
+
+   Telas: menu -> (slideshow | galeria -> slideshow em modo navegacao)
+   ========================================================================= */
+(function () {
+  'use strict';
+
+  var PADRAO = {
+    titulo: 'Fotos',
+    segundos: 7,          // tempo de cada foto na tela
+    fade: 1500,           // crossfade em ms (so no avanco automatico)
+    atualizarACada: 180,  // de quantos em quantos segundos reconsulta a pasta (0 = nunca)
+    novasNaFrente: true,  // foto nova entra logo depois da atual em vez de no fim da fila
+    embaralhar: true,     // ordem aleatoria no slideshow
+    pularMenu: false,     // true = abre direto no slideshow, sem a tela inicial
+    baixarTudo: true,     // baixa TODAS as imagens em segundo plano, assim que a pagina abre
+    baixarDeCadaVez: 4,   // quantos downloads simultaneos no segundo plano
+    mostrarNome: false,   // nome do arquivo no canto inferior esquerdo
+    mostrarContador: true,
+    prefixoIA: 'IA_',     // arquivos com esse prefixo ganham o selo
+    tituloSelo: 'processada com IA'
+  };
+
+  var CFG = {};
+  for (var k in PADRAO) CFG[k] = PADRAO[k];
+  var user = window.CFG || {};
+  for (var k2 in user) if (user[k2] !== undefined) CFG[k2] = user[k2];
+
+  var $ = function (s) { return document.querySelector(s); };
+
+  var camadas, cam = 0;
+  var fotos = [];
+  var idx = -1;
+  var tela = 'carregando';   // 'menu' | 'galeria' | 'slideshow'
+  var origem = 'menu';       // de onde o slideshow foi aberto
+  var modoNav = false;       // true = veio da galeria: nao avanca sozinho
+  var pausado = false;
+  var timerFoto = null, timerToast = null, timerCursor = null;
+  var trocando = false;
+  var gradeMontada = 0;      // quantas celulas ja estao na grade
+
+  /* ---------------------------------------------------------------- util */
+
+  function embaralha(arr) {
+    for (var i = arr.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var t = arr[i]; arr[i] = arr[j]; arr[j] = t;
+    }
+    return arr;
+  }
+
+  function ehIA(foto) {
+    return !!(CFG.prefixoIA && foto.nome &&
+      foto.nome.toUpperCase().indexOf(CFG.prefixoIA.toUpperCase()) === 0);
+  }
+
+  function toast(msg) {
+    var el = $('#toast');
+    el.textContent = msg;
+    el.classList.add('on');
+    clearTimeout(timerToast);
+    timerToast = setTimeout(function () { el.classList.remove('on'); }, 4500);
+  }
+
+  function aviso(titulo, texto, ehErro) {
+    var el = $('#aviso');
+    $('#aviso-t').textContent = titulo;
+    $('#aviso-p').innerHTML = texto || '';
+    el.classList.toggle('erro', !!ehErro);
+    el.classList.remove('off');
+  }
+
+  /* --------------------------------------------------------------- telas */
+
+  function irPara(nova) {
+    tela = nova;
+    document.body.className =
+      (document.body.classList.contains('sem-cursor') ? 'sem-cursor ' : '') + 'tela-' + nova;
+    $('#aviso').classList.add('off');
+
+    clearTimeout(timerFoto);
+    if (nova === 'slideshow' && !modoNav && !pausado) agenda();
+    if (nova === 'galeria') montarGrade();
+    if (nova === 'menu') atualizaMenu();
+  }
+
+  function atualizaMenu() {
+    $('#menu-titulo').textContent = CFG.titulo;
+    $('#menu-conta').textContent = fotos.length;
+    atualizaProgresso();
+  }
+
+  function notaAtualizacao() {
+    return CFG.atualizarACada > 0
+      ? 'a lista se atualiza sozinha a cada ' +
+        Math.max(1, Math.round(CFG.atualizarACada / 60)) + ' min'
+      : '';
+  }
+
+  /* ------------------------------------------------------ pre-carregamento */
+
+  function precarregar(foto) {
+    if (foto.urlOk) return Promise.resolve(true);
+    var tentativas = [foto.url, foto.urlAlt].filter(Boolean);
+    return new Promise(function (res) {
+      var i = 0;
+      (function tenta() {
+        if (i >= tentativas.length) { foto.quebrada = true; return res(false); }
+        var src = tentativas[i++];
+        var im = new Image();
+        var t = setTimeout(function () { im.onload = im.onerror = null; tenta(); }, 9000);
+        im.onload = function () { clearTimeout(t); foto.urlOk = src; res(true); };
+        im.onerror = function () { clearTimeout(t); tenta(); };
+        im.src = src;
+      })();
+    });
+  }
+
+  /* ------------------------------------------- baixar tudo em 2o plano
+
+     Puxa todas as imagens assim que a pagina abre, antes de precisar delas.
+     Nao guardamos os objetos Image em memoria de proposito: o que importa e
+     que os bytes fiquem no cache do navegador. Assim uma pasta grande nao
+     estoura a RAM, e se a internet cair no meio da apresentacao as fotos ja
+     baixadas continuam aparecendo normalmente.                              */
+
+  var prefetchRodando = false;
+
+  function jaResolvida(f) { return !!(f.urlOk || f.quebrada); }
+
+  function contaProntas() {
+    var n = 0;
+    for (var i = 0; i < fotos.length; i++) if (jaResolvida(fotos[i])) n++;
+    return n;
+  }
+
+  function atualizaProgresso() {
+    var el = $('#menu-rodape');
+    if (!el) return;
+    var nota = notaAtualizacao();
+
+    if (!CFG.baixarTudo || !fotos.length) { el.textContent = nota; return; }
+
+    var n = contaProntas(), tot = fotos.length;
+    if (n >= tot) {
+      el.textContent = tot + ' imagens já baixadas — a passagem não depende mais da internet' +
+        (nota ? '  ·  ' + nota : '');
+    } else {
+      el.textContent = 'baixando tudo para não depender da conexão…  ' + n + ' / ' + tot;
+    }
+  }
+
+  function baixarTudo() {
+    if (!CFG.baixarTudo || prefetchRodando) return;
+    prefetchRodando = true;
+
+    var i = 0, ativos = 0;
+    var limite = Math.max(1, CFG.baixarDeCadaVez);
+
+    function passo() {
+      while (ativos < limite && i < fotos.length) {
+        var f = fotos[i++];
+        if (jaResolvida(f)) continue;
+        ativos++;
+        precarregar(f).then(function () {
+          ativos--;
+          atualizaProgresso();
+          passo();
+        });
+      }
+      if (ativos === 0 && i >= fotos.length) {
+        prefetchRodando = false;
+        atualizaProgresso();
+      }
+    }
+    passo();
+  }
+
+  /* ----------------------------------------------------------- slideshow */
+
+  function atualizaLegendas(foto) {
+    $('#selo-txt').textContent = CFG.tituloSelo;
+    $('#selo').classList.toggle('on', ehIA(foto));
+
+    var elNome = $('#nome');
+    if (CFG.mostrarNome && foto.nome) {
+      var limpo = foto.nome.replace(/\.[a-z0-9]+$/i, '');
+      elNome.textContent = foto.pasta ? foto.pasta + '  ·  ' + limpo : limpo;
+      elNome.classList.remove('sumiu');
+    } else {
+      elNome.classList.add('sumiu');
+    }
+
+    var hud = $('#hud');
+    if (CFG.mostrarContador && fotos.length) {
+      hud.textContent = (idx + 1) + ' / ' + fotos.length;
+      hud.classList.remove('sumiu');
+    } else {
+      hud.classList.add('sumiu');
+    }
+  }
+
+  function agenda() {
+    clearTimeout(timerFoto);
+    if (pausado || modoNav || tela !== 'slideshow') return;
+    timerFoto = setTimeout(function () { ir(1, false); }, CFG.segundos * 1000);
+  }
+
+  // instantaneo = true -> troca seca, sem crossfade (setas, clique, galeria)
+  function trocarCamada(foto, instantaneo) {
+    var prox = camadas[1 - cam], velha = camadas[cam];
+
+    if (instantaneo) { prox.classList.add('instantaneo'); velha.classList.add('instantaneo'); }
+
+    prox.src = foto.urlOk;
+    prox.classList.add('ativa');
+    velha.classList.remove('ativa');
+    cam = 1 - cam;
+
+    if (instantaneo) {
+      // libera a transicao so depois que o navegador pintou, senao o
+      // proximo avanco automatico sairia sem fade
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          prox.classList.remove('instantaneo');
+          velha.classList.remove('instantaneo');
+        });
+      });
+    }
+  }
+
+  function ir(delta, instantaneo) {
+    if (trocando) return;
+    clearTimeout(timerFoto);
+
+    var vivas = 0;
+    for (var i = 0; i < fotos.length; i++) if (!fotos[i].quebrada) vivas++;
+    if (!vivas) {
+      aviso('Nenhuma imagem pôde ser exibida',
+        'A pasta tem arquivos, mas nenhum carregou. Confira se o compartilhamento está como ' +
+        '<code>Qualquer pessoa com o link</code>.', true);
+      return;
+    }
+
+    var voltas = 0, foto;
+    do {
+      idx = ((idx + delta) % fotos.length + fotos.length) % fotos.length;
+      foto = fotos[idx];
+      voltas++;
+    } while (foto && foto.quebrada && voltas <= fotos.length);
+    if (!foto) return;
+
+    trocando = true;
+    precarregar(foto).then(function (ok) {
+      trocando = false;
+      if (!ok) return ir(delta, instantaneo);
+
+      trocarCamada(foto, instantaneo);
+      atualizaLegendas(foto);
+      $('#aviso').classList.add('off');
+      agenda();
+
+      var seg = fotos[(idx + 1) % fotos.length];
+      if (seg && seg !== foto) precarregar(seg);
+    });
+  }
+
+  function abrirSlideshow(de, posicao) {
+    origem = de;
+    modoNav = (de === 'galeria');
+    pausado = false;
+    $('#pausa').classList.remove('on');
+    $('#dica').classList.remove('sumiu');
+    setTimeout(function () { $('#dica').classList.add('sumiu'); }, 9000);
+
+    irPara('slideshow');
+    if (posicao === undefined) {
+      idx = -1;
+      ir(1, true);           // a primeira aparece direto, sem fade de abertura
+    } else {
+      idx = posicao - 1;
+      ir(1, true);
+    }
+  }
+
+  function voltar() {
+    clearTimeout(timerFoto);
+    if (tela === 'slideshow') irPara(origem);
+    else if (tela === 'galeria') irPara('menu');
+  }
+
+  function togglePausa() {
+    if (tela !== 'slideshow' || modoNav) return;
+    pausado = !pausado;
+    $('#pausa').classList.toggle('on', pausado);
+    if (pausado) clearTimeout(timerFoto); else agenda();
+  }
+
+  /* ------------------------------------------------------------- galeria */
+
+  // a galeria mostra na ordem original da pasta, mesmo com o slideshow embaralhado
+  function ordemGaleria() {
+    return fotos.slice().sort(function (a, b) { return (a.ord || 0) - (b.ord || 0); });
+  }
+
+  function montarGrade(forcar) {
+    var lista = ordemGaleria();
+    $('#galeria-conta').textContent = lista.length + (lista.length === 1 ? ' imagem' : ' imagens');
+
+    if (!forcar && gradeMontada === lista.length) return;
+    var grade = $('#grade');
+    grade.innerHTML = '';
+
+    if (!lista.length) {
+      grade.innerHTML = '<div class="vazio">Nenhuma imagem na pasta ainda.</div>';
+      gradeMontada = 0;
+      return;
+    }
+
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < lista.length; i++) {
+      (function (foto, n) {
+        var cel = document.createElement('div');
+        cel.className = 'cel';
+        cel.title = (foto.pasta ? foto.pasta + '  ·  ' : '') + foto.nome;
+
+        var im = document.createElement('img');
+        im.loading = 'lazy';
+        im.decoding = 'async';
+        im.alt = foto.nome || '';
+        im.onload = function () { im.classList.add('ok'); };
+        im.onerror = function () {
+          if (foto.urlAlt && im.src !== foto.urlAlt) im.src = foto.urlAlt;
+        };
+        im.src = foto.urlThumb || foto.url;
+        cel.appendChild(im);
+
+        if (ehIA(foto)) {
+          var tg = document.createElement('span');
+          tg.className = 'tag';
+          tg.textContent = 'IA';
+          cel.appendChild(tg);
+        }
+
+        var num = document.createElement('span');
+        num.className = 'num';
+        num.textContent = n;
+        cel.appendChild(num);
+
+        cel.addEventListener('click', function () {
+          var pos = fotos.indexOf(foto);
+          if (pos >= 0) abrirSlideshow('galeria', pos);
+        });
+
+        frag.appendChild(cel);
+      })(lista[i], i + 1);
+    }
+    grade.appendChild(frag);
+    gradeMontada = lista.length;
+  }
+
+  /* ------------------------------------------------------ lista de fotos */
+
+  function sincronizar(primeira) {
+    return Promise.resolve()
+      .then(function () { return carregarFotos(); })
+      .then(function (lista) {
+        lista = lista || [];
+
+        if (!lista.length) {
+          if (primeira) {
+            aviso('A pasta está vazia',
+              'Nenhuma imagem encontrada. Assim que as primeiras fotos entrarem no Drive, ' +
+              'esta página as encontra sozinha — ela reconsulta a pasta a cada ' +
+              Math.max(1, Math.round(CFG.atualizarACada / 60)) + ' min.', true);
+          }
+          return;
+        }
+
+        var atual = fotos[idx];
+        var jaTinha = {};
+        for (var i = 0; i < fotos.length; i++) jaTinha[fotos[i].id] = true;
+
+        var idsAgora = {}, ordem = {}, novas = [];
+        for (var j = 0; j < lista.length; j++) {
+          var f = lista[j];
+          idsAgora[f.id] = true;
+          ordem[f.id] = j;                 // posicao na pasta, para a galeria
+          if (!jaTinha[f.id]) { f.ord = j; novas.push(f); }
+        }
+
+        fotos = fotos.filter(function (f) { return idsAgora[f.id] || f === atual; });
+        for (var m = 0; m < fotos.length; m++) {
+          if (ordem[fotos[m].id] !== undefined) fotos[m].ord = ordem[fotos[m].id];
+        }
+
+        if (novas.length) {
+          if (CFG.embaralhar) embaralha(novas);
+          var pos = fotos.length;
+          if (!primeira && CFG.novasNaFrente && atual && tela === 'slideshow') {
+            pos = Math.min(fotos.indexOf(atual) + 2, fotos.length);
+          }
+          Array.prototype.splice.apply(fotos, [pos, 0].concat(novas));
+        }
+
+        if (primeira && CFG.embaralhar) embaralha(fotos);
+
+        idx = atual ? fotos.indexOf(atual) : idx;
+
+        if (primeira) {
+          if (CFG.pularMenu) abrirSlideshow('menu');
+          else irPara('menu');
+        } else {
+          if (tela === 'menu') atualizaMenu();
+          if (tela === 'galeria') montarGrade(true);
+          if (novas.length) {
+            toast('+' + novas.length + (novas.length === 1 ? ' foto nova' : ' fotos novas'));
+          }
+        }
+
+        baixarTudo();   // pega tambem as que acabaram de entrar
+      })
+      .catch(function (e) {
+        console.error(e);
+        if (primeira) {
+          aviso('Não consegui ler a pasta do Drive',
+            '<code>' + String(e && e.message ? e.message : e).slice(0, 400) + '</code>', true);
+        }
+        // ja estava rodando: ignora e continua com o que tem
+      });
+  }
+
+  /* -------------------------------------------------------------- eventos */
+
+  function telaCheia() {
+    if (document.fullscreenElement) document.exitFullscreen();
+    else document.documentElement.requestFullscreen().catch(function () {});
+  }
+
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') { e.preventDefault(); voltar(); return; }
+
+    if (tela === 'menu') {
+      if (e.key === 'Enter') { e.preventDefault(); abrirSlideshow('menu'); }
+      return;
+    }
+    if (tela !== 'slideshow') return;
+
+    if (e.key === 'ArrowRight' || e.key === 'PageDown') { e.preventDefault(); ir(1, true); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); ir(-1, true); }
+    else if (e.key === ' ') { e.preventDefault(); togglePausa(); }
+    else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); telaCheia(); }
+    else if (e.key === 'r' || e.key === 'R') { sincronizar(false); toast('procurando fotos novas…'); }
+  });
+
+  document.addEventListener('click', function (e) {
+    if (tela !== 'slideshow') return;
+    if (e.target.closest && e.target.closest('button')) return;
+    ir(1, true);
+  });
+
+  function mexeuMouse() {
+    document.body.classList.remove('sem-cursor');
+    clearTimeout(timerCursor);
+    timerCursor = setTimeout(function () {
+      if (tela === 'slideshow') document.body.classList.add('sem-cursor');
+    }, 2500);
+  }
+  document.addEventListener('mousemove', mexeuMouse);
+
+  /* ---------------------------------------------------------------- start */
+
+  function iniciar() {
+    camadas = [$('#a'), $('#b')];
+    document.documentElement.style.setProperty('--fade', CFG.fade + 'ms');
+
+    $('#bt-slideshow').addEventListener('click', function () { abrirSlideshow('menu'); });
+    $('#bt-slideshow-2').addEventListener('click', function () { abrirSlideshow('galeria'); modoNav = false; agenda(); });
+    $('#bt-galeria').addEventListener('click', function () { irPara('galeria'); });
+    $('#bt-voltar').addEventListener('click', voltar);
+    $('#bt-voltar-menu').addEventListener('click', voltar);
+
+    mexeuMouse();
+    sincronizar(true);
+
+    if (CFG.atualizarACada > 0) {
+      setInterval(function () { sincronizar(false); }, CFG.atualizarACada * 1000);
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', iniciar);
+  } else {
+    iniciar();
+  }
+})();
+</script>
+</body>
+</html>
