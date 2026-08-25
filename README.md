@@ -129,6 +129,29 @@ Só se você não quiser depender do Apps Script. Aí precisa da chave.
 
 Para atualizar depois: *Deploys → arraste a pasta de novo*.
 
+### Já publicado no GitHub Pages
+
+O site está no ar em **https://davigaborim.github.io/slideshow-drive/**
+
+O repositório é `davigaborim/slideshow-drive`. A branch `main` guarda o projeto
+inteiro; a branch `gh-pages` guarda só o conteúdo de `web/`, que é o que o Pages serve.
+
+Para publicar uma alteração:
+
+```bash
+bash build.sh                                  # se mexeu em src/
+git add -A && git commit -m "o que mudou"
+git push
+git subtree push --prefix web origin gh-pages  # manda web/ para o site
+```
+
+O Pages leva ~1 minuto para reconstruir. Se o navegador insistir em servir a versão
+velha, force com Ctrl+Shift+R.
+
+> O repositório é **público** — GitHub Pages em conta gratuita exige isso. As fotos
+> nunca vão para lá: o `.gitignore` bloqueia `offline/fotos/`. O que fica público é
+> só o código e o ID da pasta do Drive, que já é um link compartilhável.
+
 ---
 
 ## PLANO C — versão offline
