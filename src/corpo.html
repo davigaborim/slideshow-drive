@@ -1,24 +1,33 @@
 <!-- ---------------------------------------------------------- slideshow -->
 <div id="palco">
-  <img class="camada" id="a" alt="">
-  <img class="camada" id="b" alt="">
+  <div class="camada" id="a">
+    <img alt="">
+    <video playsinline preload="auto"></video>
+    <iframe allow="autoplay; fullscreen" frameborder="0" allowfullscreen></iframe>
+  </div>
+  <div class="camada" id="b">
+    <img alt="">
+    <video playsinline preload="auto"></video>
+    <iframe allow="autoplay; fullscreen" frameborder="0" allowfullscreen></iframe>
+  </div>
 </div>
 
 <div id="selo"><span class="pt"></span><span id="selo-txt">processada com IA</span></div>
 <div id="nome"></div>
 <div id="hud"></div>
 <div id="pausa">&#10073;&#10073; pausado</div>
-<div id="dica"><b>F11</b> tela cheia &nbsp;&middot;&nbsp; <b>espa&ccedil;o</b> pausa &nbsp;&middot;&nbsp; <b>Esc</b> volta</div>
+<div id="dica"><b>F11</b> tela cheia &nbsp;&middot;&nbsp; <b>espa&ccedil;o</b> pausa &nbsp;&middot;&nbsp; <b>M</b> m&uacute;sica &nbsp;&middot;&nbsp; <b>Esc</b> volta</div>
 
 <!-- ------------------------------------------------------------- menu -->
 <div id="menu">
   <div class="marca" id="menu-titulo">Fotos</div>
-  <div class="conta"><span id="menu-conta">0</span> imagens na pasta</div>
+  <div class="conta" id="menu-conta">0 imagens na pasta</div>
+
   <div class="botoes">
     <button class="bt principal" id="bt-slideshow">
       <span class="ico">&#9654;</span>
       <span class="rot">Iniciar slideshow</span>
-      <span class="sub">passa sozinho, em ordem aleat&oacute;ria</span>
+      <span class="sub" id="sub-slideshow">passa sozinho, sem repetir nenhuma</span>
     </button>
     <button class="bt" id="bt-galeria">
       <span class="ico">&#9638;</span>
@@ -26,6 +35,47 @@
       <span class="sub">ver todas em grade e escolher</span>
     </button>
   </div>
+
+  <!-- ---------------------------------------------------- ajustes -->
+  <div id="ajustes">
+    <div class="linha">
+      <span class="rot">Tempo por foto</span>
+      <span class="ctrl">
+        <button class="passo" id="tempo-menos" title="menos tempo">&minus;</button>
+        <span class="val" id="tempo-val">3s</span>
+        <button class="passo" id="tempo-mais" title="mais tempo">+</button>
+      </span>
+    </div>
+
+    <div class="linha">
+      <span class="rot">Ordem</span>
+      <span class="ctrl seg" id="seg-ordem">
+        <button data-v="1" class="on">Aleat&oacute;ria</button>
+        <button data-v="0">Da pasta</button>
+      </span>
+    </div>
+
+    <div class="linha">
+      <span class="rot">V&iacute;deos</span>
+      <span class="ctrl seg" id="seg-videos">
+        <button data-v="1" class="on">Incluir</button>
+        <button data-v="0">Pular</button>
+      </span>
+    </div>
+
+    <div class="linha">
+      <span class="rot">M&uacute;sica de fundo</span>
+      <span class="ctrl">
+        <span class="seg" id="seg-musica">
+          <button data-v="1">Ligada</button>
+          <button data-v="0" class="on">Desligada</button>
+        </span>
+        <input type="range" id="volume" min="0" max="100" step="5" value="35" title="volume">
+      </span>
+    </div>
+    <div class="nota" id="nota-musica"></div>
+  </div>
+
   <div class="rodape" id="menu-rodape"></div>
 </div>
 
@@ -47,6 +97,8 @@
 <!-- ------------------------------------------------ carregando / erro -->
 <div id="aviso">
   <div class="giro"></div>
-  <h1 id="aviso-t">Carregando as fotos&hellip;</h1>
+  <h1 id="aviso-t">Carregando os arquivos&hellip;</h1>
   <p id="aviso-p"></p>
 </div>
+
+<audio id="trilha" loop></audio>

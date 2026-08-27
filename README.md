@@ -1,10 +1,24 @@
 # Slideshow automático da pasta do Drive
 
-Uma página que lê a pasta pública do Google Drive e passa as fotos sozinha.
-**Ela reconsulta a pasta a cada 3 minutos** — então foto que alguém subir durante
-a apresentação entra na rotação sem ninguém tocar em nada.
+Uma página que lê a pasta pública do Google Drive e passa **fotos e vídeos** sozinha,
+com música de fundo opcional. **Ela reconsulta a pasta a cada 3 minutos** — então
+arquivo que alguém subir durante a apresentação entra na rotação sem ninguém tocar
+em nada.
 
 A professora recebe um link, abre, aperta **F11**. Só isso.
+
+No ar em **https://davigaborim.github.io/slideshow-drive/**
+
+> ### ⚠️ Falta um passo, e é no Apps Script
+>
+> O `Codigo.gs` deste repositório passou a ler **vídeo e áudio** além de imagem, e a
+> descartar arquivos duplicados. A implantação publicada ainda é a antiga — enquanto
+> ela não for atualizada, **os vídeos não aparecem**.
+>
+> No editor do Apps Script: cole o novo `apps-script/Codigo.gs` e o novo
+> `apps-script/index.html`, depois **Implantar → Gerenciar implantações → lápis →
+> Versão: Nova versão → Implantar**. A URL `/exec` continua exatamente a mesma, então
+> nada mais precisa mudar.
 
 ```
 slideshow-ufms/
@@ -63,8 +77,10 @@ Quem lê a pasta é a sua própria conta Google.
 4. **Teste antes de publicar:** no seletor de função lá em cima, escolha `testar`
    e clique em **Executar**. Vai pedir autorização — aceite (na tela de aviso,
    *Avançado → Acessar projeto sem título*). O "Registro de execução" mostra o nome
-   da pasta, o total de imagens, **quantas em cada subpasta**, quantas já estão com
-   o prefixo `IA_` e quanto tempo a varredura levou.
+   da pasta, **quantas fotos, quantos vídeos e quantas músicas**, quantas em cada
+   subpasta, quantas já estão com o prefixo `IA_` e quanto tempo a varredura levou.
+   Ele também lista, no fim, os arquivos que são **cópia um do outro** — a função
+   `conferirDuplicadas` faz só essa parte, se você quiser rodar de novo depois.
 
 5. **Implantar** → **Nova implantação** → engrenagem → **App da Web**:
    - Executar como: **Eu**
@@ -176,14 +192,85 @@ powershell -ExecutionPolicy Bypass -File .\gerar-lista.ps1
 
 ## Como a página funciona
 
-Ao abrir, ela cai numa **tela inicial** com duas opções:
+Ao abrir, ela cai numa **tela inicial** com duas opções e um painel de ajustes:
 
-- **Iniciar slideshow** — passa sozinho, em ordem aleatória, com crossfade
+- **Iniciar slideshow** — passa sozinho, com crossfade
 - **Navegar nas imagens** — grade de miniaturas tipo Drive; clicar numa abre em tela
   cheia, e aí as setas navegam **sem avançar sozinho**
 
 `Esc` volta um nível (slideshow → de onde veio → menu). Se quiser pular a tela inicial
 e cair direto no slideshow, ponha `pularMenu: true` na config.
+
+### Ajustes na própria tela inicial
+
+Não precisa mexer em arquivo nenhum para as coisas do dia a dia. A tela inicial tem:
+
+| Ajuste | O quê |
+|---|---|
+| **Tempo por foto** | `−` / `+`, de 1 s a 30 s. Vídeo não usa isso: usa a duração dele |
+| **Ordem** | Aleatória ou na ordem da pasta |
+| **Vídeos** | Incluir ou pular os vídeos |
+| **Música de fundo** | Ligada / desligada, com volume |
+
+O que for mexido fica guardado **naquele navegador** (`localStorage`), então se você
+ajustar antes da aula e der F5, continua como você deixou. Para desligar isso:
+`lembrarAjustes: false`.
+
+### Nada repete antes de todas passarem
+
+A ordem aleatória **não é sorteio a cada troca** — isso repetiria foto o tempo todo.
+Funciona como um baralho: embaralha a lista inteira uma vez e vai tirando de cima.
+Só quando a última sai é que ele embaralha de novo e começa a rodada seguinte — e
+ainda troca a primeira carta se ela for igual à que acabou de sair da tela, para não
+emendar a mesma imagem duas vezes na virada.
+
+O contador no canto (`12 / 87`) é a posição **dentro da rodada**, então dá para saber
+quanto falta para dar a volta completa.
+
+As setas ← → andam num histórico separado: voltar e avançar de novo não gasta a fila
+nem fura a regra. Arquivo que chega no meio da rodada é encaixado no que ainda falta,
+nunca no que já passou.
+
+Se ainda assim uma foto parecer repetida, ela provavelmente está **duplicada no Drive**.
+Duas coisas cuidam disso:
+
+- o `Codigo.gs` já descarta cópias — mesmo tamanho em bytes e mesmo nome ignorando
+  `(1)`, `- Cópia`, maiúsculas (constante `TIRAR_DUPLICADAS`);
+- para ver quais são, rode a função **`conferirDuplicadas`** no editor do Apps Script:
+  ela lista, no registro de execução, cada grupo de arquivos idênticos e onde estão.
+
+### Vídeos
+
+Vídeo entra no rodízio junto com as fotos, sem configuração. Ele:
+
+- **toca com o áudio dele** — e a música de fundo abaixa até zero enquanto isso,
+  voltando sozinha quando o vídeo acaba (se o vídeo for mudo, a música continua);
+- **fica na tela o tempo que durar**, não os 3 s das fotos. Para cortar vídeo longo,
+  use `maxSegundosVideo: 45`;
+- se o navegador não conseguir tocar o arquivo direto, cai no **player do próprio
+  Drive** dentro de um iframe, e aí usa `segundosVideo` (30 s) como duração.
+
+Vídeo **não** é baixado antes junto com as fotos, de propósito: um arquivo de 200 MB
+no pré-download derrubaria a página. Ele é lido do Drive na hora, e o próximo já vai
+sendo carregado enquanto o atual está na tela.
+
+> Se a apresentação for num wi-fi ruim, **desligue os vídeos** no painel. As fotos
+> continuam garantidas pelo pré-download; os vídeos não têm como ser.
+
+### Música de fundo
+
+Ligou na tela inicial (ou com a tecla **M**), toca. De onde ela sai, nesta ordem:
+
+1. **qualquer arquivo de áudio que estiver na pasta do Drive** — mp3, m4a, wav.
+   É só a professora jogar um lá, ou você mesmo subir. Se tiver mais de um, toca em
+   sequência; se tiver um só, fica em loop;
+2. `musicaUrl` na config, se você quiser apontar um mp3 específico;
+3. **nada disso** — o navegador gera um fundo ambiente na hora, com Web Audio.
+   Não baixa arquivo, não tem questão de direito autoral, e nunca desafina: é um pad
+   sobre escala pentatônica, onde qualquer combinação soa consonante.
+
+A música só começa **depois do clique em "Iniciar slideshow"** — não é escolha nossa,
+é regra de todos os navegadores: som não toca sem um gesto do usuário.
 
 ### Ela baixa tudo antes
 
@@ -201,45 +288,60 @@ de começar. Para desligar: `baixarTudo: false`.
 | Tecla | O quê |
 |---|---|
 | **F11** | tela cheia (funciona em qualquer navegador) |
-| **espaço** | pausa / continua — para comentar uma foto |
+| **espaço** | pausa / continua — para comentar uma foto (pausa o vídeo também) |
 | **← →** | volta / avança na hora, **sem transição** |
+| **M** | liga / desliga a música de fundo |
 | **Esc** | volta para a galeria / tela inicial |
-| **R** | força a busca por fotos novas agora, sem esperar os 3 min |
-| clique | avança (útil com apresentador remoto) |
+| **R** | força a busca por arquivos novos agora, sem esperar os 3 min |
+| clique | avança — clicar **em cima de um vídeo** controla o vídeo, não avança |
 
 O crossfade só acontece na passagem **automática**. Troca manual é seca, de propósito.
 O cursor do mouse e o botão "Voltar" somem sozinhos depois de 2,5 s parado.
 
 ---
 
-## Ajustes
+## Ajustes no arquivo
 
-Tudo fica no `config.js` da versão que você escolheu (na Rota A, no bloco `window.CFG`
-dentro de `apps-script/index.html`).
+O painel da tela inicial cobre o dia a dia. O resto fica no `config.js` da versão que
+você escolheu (na Rota A, no bloco `window.CFG` dentro de `apps-script/index.html`).
 
 | Opção | Padrão | O quê |
 |---|---|---|
-| `segundos` | `7` | tempo de cada foto na tela |
-| `fade` | `1500` | duração do crossfade, em ms |
+| `segundos` | `3` | tempo de cada **foto** na tela (vídeo usa a duração dele) |
+| `fade` | `1200` | duração do crossfade, em ms |
+| `embaralhar` | `true` | `true` = ordem aleatória sem repetir; `false` = ordem da pasta |
+| `incluirVideos` | `true` | `false` = pula os vídeos da pasta |
+| `maxSegundosVideo` | `0` | `0` = vídeo inteiro; `45` = corta em 45 s |
+| `segundosVideo` | `30` | só para vídeo que caiu no player do Drive (iframe) |
+| `musica` | `false` | trilha já ligada ao abrir |
+| `volume` | `0.35` | volume da trilha, de 0 a 1 |
+| `musicaUrl` | `''` | mp3 avulso; vazio = áudio da pasta, ou som gerado |
 | `atualizarACada` | `180` | de quantos em quantos segundos reconsulta a pasta |
-| `novasNaFrente` | `true` | foto recém-enviada entra logo depois da atual, não no fim da fila |
+| `novasNaFrente` | `true` | arquivo recém-enviado entra logo depois do atual, não no fim |
 | `mostrarNome` | `false` | nome do arquivo no canto inferior esquerdo (com a subpasta) |
 | `mostrarContador` | `true` | o `12 / 87` no canto inferior direito |
 | `prefixoIA` | `'IA_'` | arquivos com esse começo ganham o selo |
 | `titulo` | `'Fotos da turma'` | o que aparece na tela inicial |
-| `embaralhar` | `true` | `true` = ordem aleatória; `false` = ordem de upload |
 | `pularMenu` | `false` | `true` = abre direto no slideshow, sem a tela inicial |
 | `baixarTudo` | `true` | baixa todas as imagens de cara, para não depender da conexão |
 | `baixarDeCadaVez` | `4` | quantos downloads simultâneos em segundo plano |
+| `lembrarAjustes` | `true` | guarda o painel no navegador entre um F5 e outro |
 
-Na Rota A há mais quatro constantes, no topo do `Codigo.gs`:
+Na Rota A há mais constantes, no topo do `Codigo.gs`:
 
 | Constante | Padrão | O quê |
 |---|---|---|
 | `VARRER_SUBPASTAS` | `true` | `false` = só a pasta raiz |
 | `PROFUNDIDADE_MAX` | `8` | até quantos níveis descer |
 | `ORDEM` | `'data'` | `'data'` = ordem de upload; `'pasta'` = agrupado por subpasta |
+| `TIRAR_DUPLICADAS` | `true` | descarta cópias do mesmo arquivo (tamanho + nome) |
+| `DUPLICADA_SO_PELO_TAMANHO` | `false` | `true` = considera cópia só pelo tamanho, mesmo com nome diferente |
 | `CACHE_SEG` | `60` | quanto tempo a lista fica em cache no servidor |
+
+E duas funções para rodar no editor, pelo botão **Executar**:
+
+- **`testar`** — quantas fotos, vídeos e músicas ele enxerga, e em quais subpastas
+- **`conferirDuplicadas`** — quais arquivos da pasta são cópia um do outro
 
 Se mexer em `src/`, rode `bash build.sh` (Git Bash) para remontar as três versões.
 Os `config.js` de `web/` e `offline/` nunca são sobrescritos.
@@ -248,11 +350,15 @@ Os `config.js` de `web/` e `offline/` nunca são sobrescritos.
 
 ## Checklist do dia
 
+- [ ] **Redeploy do Apps Script** com o `Codigo.gs` novo (senão não tem vídeo)
 - [ ] Véspera: montar a pasta `offline/` e testar (Plano C)
 - [ ] Véspera: subir as 5 imagens `IA_*.jpg` no Drive
+- [ ] Véspera: se quiser trilha, jogar **um mp3 na pasta do Drive**
 - [ ] Abrir o link **10 minutos antes** e deixar rodando numa aba
+- [ ] Conferir o painel: tempo por foto, vídeos, música — e esperar o rodapé dizer
+      `N imagens já baixadas`
 - [ ] F11
-- [ ] Se o wi-fi estiver ruim: fechar e abrir a versão offline
+- [ ] Se o wi-fi estiver ruim: desligar **Vídeos** no painel, ou abrir a versão offline
 
 ---
 
@@ -262,10 +368,16 @@ Os `config.js` de `web/` e `offline/` nunca são sobrescritos.
 |---|---|
 | "Não consegui ler a pasta" + erro 403 | Drive API não ativada, ou restrição da chave não bate com a URL do site |
 | "Não consegui ler a pasta" + erro 404 | ID da pasta errado (copiou o link inteiro em vez do ID) |
-| "A pasta está vazia" | pasta certa mas sem nenhum arquivo de imagem (só PDF/vídeo/atalho) |
+| "A pasta está vazia" | pasta certa mas sem nenhuma imagem, vídeo ou áudio (só PDF/doc/atalho) |
 | Faltou o conteúdo de uma subpasta | ela está mais de 8 níveis abaixo, ou é um **atalho** de pasta em vez da pasta (o Drive não deixa seguir atalho) |
 | A página demora a abrir | árvore grande demais para varrer a cada acesso — aumente `CACHE_SEG` para `120` |
 | Tela preta, nenhuma imagem | compartilhamento está "Restrito" em vez de "Qualquer pessoa com o link" |
 | Apps Script mostra código velho | faltou publicar **nova versão** em Gerenciar implantações |
 | Algumas fotos não aparecem | arquivo não é imagem (HEIC de iPhone às vezes não abre) — converta para JPG |
+| **"o Apps Script respondeu, mas não com a lista"** | implantação velha. Abra o script → **Implantar → Gerenciar implantações → lápis → Versão: Nova versão → Implantar**. A URL `/exec` não muda |
+| **Os vídeos não aparecem** | o `Codigo.gs` publicado é o antigo, que só lia imagem. Cole o novo e faça o redeploy como acima |
+| Um vídeo abre com a moldura do Drive | o navegador não conseguiu tocar o arquivo direto (formato ou tamanho) e caiu no player do Drive — funciona, só fica menos limpo |
+| Vídeo trava ou engasga | ele não é pré-baixado (seria grande demais). Se o wi-fi estiver ruim, desligue **Vídeos** no painel |
+| A música não começa | o navegador exige um gesto: ela só entra depois do clique em "Iniciar slideshow", nunca sozinha ao abrir |
+| Uma foto repete | duplicada no Drive. Rode `conferirDuplicadas` no editor do Apps Script para ver quais são |
 | **Faixa branca no topo (Rota A)** | é a moldura que o Google põe em volta de todo app do Apps Script — vem do `script.google.com`, fora da nossa página, e não dá para estilizar de dentro. F11 deixa ela mínima; para sumir de vez, use a Rota B no Modo 1 |

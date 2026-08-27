@@ -25,8 +25,6 @@ body.tela-slideshow #palco{display:block}
 #palco{position:fixed;inset:0;background:#000}
 .camada{
   position:absolute;inset:0;
-  width:100%;height:100%;
-  object-fit:contain;
   opacity:0;
   transition:opacity var(--fade,1500ms) ease-in-out;
   will-change:opacity;
@@ -34,6 +32,17 @@ body.tela-slideshow #palco{display:block}
 .camada.ativa{opacity:1}
 /* troca manual (setas/clique): sem transicao nenhuma */
 .camada.instantaneo{transition:none}
+
+.camada > img,.camada > video,.camada > iframe{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  border:0;background:#000;
+  display:none;
+}
+.camada > img,.camada > video{object-fit:contain}
+.camada.mostra-img > img{display:block}
+.camada.mostra-video > video{display:block}
+.camada.mostra-iframe > iframe{display:block}
 
 #selo{
   position:fixed;top:28px;left:28px;
@@ -118,25 +127,26 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 #menu{
   position:fixed;inset:0;
   flex-direction:column;align-items:center;justify-content:center;
-  gap:0;padding:40px;text-align:center;
+  gap:0;padding:34px 40px;text-align:center;
+  overflow-y:auto;
   background:
     radial-gradient(1100px 620px at 50% -12%, #1b1b21 0%, #0a0a0c 62%, #000 100%);
 }
 #menu .marca{
-  font-size:clamp(28px,4.6vw,50px);
+  font-size:clamp(26px,4.2vw,46px);
   font-weight:600;letter-spacing:-.022em;line-height:1.1;
   background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,.62));
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:#fff;
 }
 #menu .conta{
-  margin-top:14px;
+  margin-top:13px;
   font-size:13.5px;letter-spacing:.04em;
   color:rgba(255,255,255,.42);
   font-variant-numeric:tabular-nums;
 }
 #menu .botoes{
-  margin-top:46px;
+  margin-top:38px;
   display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
 }
 .bt{
@@ -158,9 +168,90 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 .bt .sub{font-size:12.5px;color:rgba(255,255,255,.42);letter-spacing:.01em}
 .bt.principal .sub{color:rgba(0,0,0,.5)}
 #menu .rodape{
-  margin-top:44px;
+  margin-top:26px;
   font-size:12px;letter-spacing:.04em;
   color:rgba(255,255,255,.26);
+}
+
+/* ------------------------------------------------------------ ajustes */
+#ajustes{
+  margin-top:30px;width:100%;max-width:556px;
+  padding:6px 20px 14px;
+  background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  text-align:left;
+}
+#ajustes .linha{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+#ajustes .linha:last-of-type{border-bottom:0}
+#ajustes .rot{
+  font-size:13px;letter-spacing:.01em;
+  color:rgba(255,255,255,.62);white-space:nowrap;
+}
+#ajustes .ctrl{display:flex;align-items:center;gap:10px}
+
+/* stepper do tempo */
+.passo{
+  width:27px;height:27px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:8px;
+  color:rgba(255,255,255,.8);
+  font:inherit;font-size:15px;line-height:1;
+  cursor:pointer;transition:background .15s,border-color .15s;
+}
+.passo:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.26)}
+.passo:disabled{opacity:.3;cursor:default}
+#ajustes .val{
+  min-width:38px;text-align:center;
+  font-size:13.5px;font-variant-numeric:tabular-nums;
+  color:#fff;
+}
+
+/* botoes segmentados */
+.seg{
+  display:inline-flex;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:9px;
+  overflow:hidden;
+}
+.seg button{
+  padding:6px 13px;
+  background:transparent;border:0;
+  color:rgba(255,255,255,.5);
+  font:inherit;font-size:12.5px;letter-spacing:.01em;
+  cursor:pointer;transition:background .15s,color .15s;
+}
+.seg button:hover{color:rgba(255,255,255,.85)}
+.seg button.on{background:rgba(255,255,255,.9);color:#0b0b0d;font-weight:550}
+
+#volume{
+  -webkit-appearance:none;appearance:none;
+  width:92px;height:3px;border-radius:3px;
+  background:rgba(255,255,255,.18);
+  outline:none;cursor:pointer;
+  transition:opacity .2s;
+}
+#volume:disabled{opacity:.25;cursor:default}
+#volume::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:13px;height:13px;border-radius:50%;
+  background:#fff;cursor:pointer;
+}
+#volume::-moz-range-thumb{
+  width:13px;height:13px;border:0;border-radius:50%;
+  background:#fff;cursor:pointer;
+}
+#ajustes .nota{
+  padding-top:9px;
+  font-size:11.5px;line-height:1.55;
+  color:rgba(255,255,255,.3);
 }
 
 /* =============================================================== galeria */
@@ -239,6 +330,19 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
   color:#8ef0bb;
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
+/* video na grade: simbolo de play no centro */
+.cel .play{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(8,8,10,.6);
+  border:1px solid rgba(255,255,255,.3);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  font-size:14px;color:#fff;padding-left:3px;
+  pointer-events:none;
+}
+.cel.video{background:#101014}
 #grade .vazio{
   grid-column:1/-1;padding:60px 0;text-align:center;
   font-size:13px;color:rgba(255,255,255,.34);
@@ -283,6 +387,8 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 }
 #toast.on{opacity:1;transform:translate(-50%,0)}
 
+#trilha{display:none}
+
 @media (max-width:640px){
   #selo{top:16px;left:16px;font-size:12px}
   #dica{display:none}
@@ -290,31 +396,41 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
   .bt{width:100%;max-width:330px}
   #grade{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:7px}
   #galeria{padding:70px 12px 40px}
+  #ajustes .linha{flex-direction:column;align-items:flex-start;gap:8px}
 }
 </style>
 </head>
 <body>
 <!-- ---------------------------------------------------------- slideshow -->
 <div id="palco">
-  <img class="camada" id="a" alt="">
-  <img class="camada" id="b" alt="">
+  <div class="camada" id="a">
+    <img alt="">
+    <video playsinline preload="auto"></video>
+    <iframe allow="autoplay; fullscreen" frameborder="0" allowfullscreen></iframe>
+  </div>
+  <div class="camada" id="b">
+    <img alt="">
+    <video playsinline preload="auto"></video>
+    <iframe allow="autoplay; fullscreen" frameborder="0" allowfullscreen></iframe>
+  </div>
 </div>
 
 <div id="selo"><span class="pt"></span><span id="selo-txt">processada com IA</span></div>
 <div id="nome"></div>
 <div id="hud"></div>
 <div id="pausa">&#10073;&#10073; pausado</div>
-<div id="dica"><b>F11</b> tela cheia &nbsp;&middot;&nbsp; <b>espa&ccedil;o</b> pausa &nbsp;&middot;&nbsp; <b>Esc</b> volta</div>
+<div id="dica"><b>F11</b> tela cheia &nbsp;&middot;&nbsp; <b>espa&ccedil;o</b> pausa &nbsp;&middot;&nbsp; <b>M</b> m&uacute;sica &nbsp;&middot;&nbsp; <b>Esc</b> volta</div>
 
 <!-- ------------------------------------------------------------- menu -->
 <div id="menu">
   <div class="marca" id="menu-titulo">Fotos</div>
-  <div class="conta"><span id="menu-conta">0</span> imagens na pasta</div>
+  <div class="conta" id="menu-conta">0 imagens na pasta</div>
+
   <div class="botoes">
     <button class="bt principal" id="bt-slideshow">
       <span class="ico">&#9654;</span>
       <span class="rot">Iniciar slideshow</span>
-      <span class="sub">passa sozinho, em ordem aleat&oacute;ria</span>
+      <span class="sub" id="sub-slideshow">passa sozinho, sem repetir nenhuma</span>
     </button>
     <button class="bt" id="bt-galeria">
       <span class="ico">&#9638;</span>
@@ -322,6 +438,47 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
       <span class="sub">ver todas em grade e escolher</span>
     </button>
   </div>
+
+  <!-- ---------------------------------------------------- ajustes -->
+  <div id="ajustes">
+    <div class="linha">
+      <span class="rot">Tempo por foto</span>
+      <span class="ctrl">
+        <button class="passo" id="tempo-menos" title="menos tempo">&minus;</button>
+        <span class="val" id="tempo-val">3s</span>
+        <button class="passo" id="tempo-mais" title="mais tempo">+</button>
+      </span>
+    </div>
+
+    <div class="linha">
+      <span class="rot">Ordem</span>
+      <span class="ctrl seg" id="seg-ordem">
+        <button data-v="1" class="on">Aleat&oacute;ria</button>
+        <button data-v="0">Da pasta</button>
+      </span>
+    </div>
+
+    <div class="linha">
+      <span class="rot">V&iacute;deos</span>
+      <span class="ctrl seg" id="seg-videos">
+        <button data-v="1" class="on">Incluir</button>
+        <button data-v="0">Pular</button>
+      </span>
+    </div>
+
+    <div class="linha">
+      <span class="rot">M&uacute;sica de fundo</span>
+      <span class="ctrl">
+        <span class="seg" id="seg-musica">
+          <button data-v="1">Ligada</button>
+          <button data-v="0" class="on">Desligada</button>
+        </span>
+        <input type="range" id="volume" min="0" max="100" step="5" value="35" title="volume">
+      </span>
+    </div>
+    <div class="nota" id="nota-musica"></div>
+  </div>
+
   <div class="rodape" id="menu-rodape"></div>
 </div>
 
@@ -343,47 +500,359 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 <!-- ------------------------------------------------ carregando / erro -->
 <div id="aviso">
   <div class="giro"></div>
-  <h1 id="aviso-t">Carregando as fotos&hellip;</h1>
+  <h1 id="aviso-t">Carregando os arquivos&hellip;</h1>
   <p id="aviso-p"></p>
 </div>
+
+<audio id="trilha" loop></audio>
 <script>
 /* Ajustes do slideshow (versao Apps Script).
    O ID da pasta do Drive NAO fica aqui - fica no Codigo.gs, na constante ID_PASTA. */
 window.CFG = {
-  titulo: 'Fotos da turma',   // aparece na tela inicial
-  segundos: 7,                // tempo de cada foto na tela
-  fade: 1500,                 // crossfade em ms (so no avanco automatico)
-  atualizarACada: 180,        // reconsulta a pasta a cada X segundos (0 desliga)
-  novasNaFrente: true,        // foto recem-enviada entra logo depois da atual
-  embaralhar: true,           // ordem aleatoria
-  pularMenu: false,           // true = abre direto no slideshow, sem tela inicial
-  baixarTudo: true,           // baixa todas as imagens de cara, para nao depender da conexao
+  titulo: 'Fotos da turma',
+  segundos: 3,                // tempo de cada FOTO (o video usa a duracao dele)
+  fade: 1200,
+  embaralhar: true,           // ordem aleatoria, sem repetir ate passar por todas
+  pularMenu: false,
+
+  incluirVideos: true,
+  maxSegundosVideo: 0,
+  segundosVideo: 30,
+
+  musica: false,
+  volume: 0.35,
+  musicaUrl: '',
+
+  atualizarACada: 180,
+  novasNaFrente: true,
+  baixarTudo: true,
   baixarDeCadaVez: 4,
+
   mostrarNome: false,
   mostrarContador: true,
   prefixoIA: 'IA_',
-  tituloSelo: 'processada com IA'
+  tituloSelo: 'processada com IA',
+  lembrarAjustes: true
 };
 </script>
 <script>
-/* Fonte das fotos: funcao listarFotos() do Codigo.gs, rodando no servidor do Apps Script.
-   Nao existe chave de API aqui - quem le a pasta e a sua conta Google.
-   O servidor manda so { id, nome, pasta }; as URLs sao montadas aqui. */
+/* =========================================================================
+   Trilha sonora de fundo.
+
+   De onde vem a musica, nesta ordem:
+     1. arquivos de audio que estiverem na propria pasta do Drive
+        (mp3, m4a, wav... e so a professora jogar um la);
+     2. CFG.musicaUrl  - um endereco de mp3, ou uma lista deles;
+     3. nada disso  -> um fundo ambiente gerado na hora pelo proprio
+        navegador (Web Audio). Nao baixa arquivo nenhum e nao tem
+        questao de direito autoral.
+
+   Regra combinada: quando entra um video, a trilha abaixa ate sumir, para
+   valer o audio do video. Quando o video acaba, ela volta sozinha.
+   ========================================================================= */
+window.Trilha = (function () {
+  'use strict';
+
+  var el = null;            // <audio> quando a musica vem de arquivo
+  var faixas = [];          // [{ nome, urls: [] }]
+  var atual = 0;
+  var ligada = false;
+  var abafada = false;
+  var volume = 0.35;        // 0..1, escolhido pelo usuario
+  var ctx = null, mestre = null, gerador = null;
+  var rampa = null;
+
+  /* ------------------------------------------------------------- volume */
+
+  function alvoDeVolume() {
+    if (!ligada) return 0;
+    return abafada ? 0 : volume;
+  }
+
+  // sobe/desce devagar: cortar seco estala e chama atencao
+  function aplicarVolume(imediato) {
+    var v = alvoDeVolume();
+
+    if (mestre && ctx) {
+      var agora = ctx.currentTime;
+      mestre.gain.cancelScheduledValues(agora);
+      mestre.gain.setValueAtTime(mestre.gain.value, agora);
+      mestre.gain.linearRampToValueAtTime(v * 0.9, agora + (imediato ? 0.05 : 0.9));
+    }
+
+    if (el) {
+      clearInterval(rampa);
+      if (imediato) { el.volume = v; return; }
+      var passos = 18, i = 0, de = el.volume;
+      rampa = setInterval(function () {
+        i++;
+        el.volume = Math.max(0, Math.min(1, de + (v - de) * (i / passos)));
+        if (i >= passos) clearInterval(rampa);
+      }, 45);
+    }
+  }
+
+  /* ----------------------------------------------- musica de arquivo */
+
+  function tocarFaixa(n) {
+    if (!faixas.length) return;
+    atual = ((n % faixas.length) + faixas.length) % faixas.length;
+    var f = faixas[atual];
+    el.tentativa = 0;
+    el.loop = (faixas.length === 1);
+    el.src = f.urls[0];
+    el.volume = 0;
+    el.play().then(function () { aplicarVolume(false); }).catch(function () {});
+  }
+
+  function prepararElemento() {
+    if (el) return;
+    el = document.getElementById('trilha');
+    if (!el) { el = document.createElement('audio'); document.body.appendChild(el); }
+
+    el.addEventListener('ended', function () {
+      if (faixas.length > 1) tocarFaixa(atual + 1);
+    });
+
+    el.addEventListener('error', function () {
+      var f = faixas[atual];
+      if (!f) return;
+      // tenta o endereco alternativo do mesmo arquivo antes de desistir dele
+      el.tentativa = (el.tentativa || 0) + 1;
+      if (f.urls[el.tentativa]) {
+        el.src = f.urls[el.tentativa];
+        el.play().catch(function () {});
+        return;
+      }
+      faixas.splice(atual, 1);
+      if (faixas.length) tocarFaixa(atual);
+      else { desmontarArquivo(); if (ligada) iniciarGerado(); }
+    });
+  }
+
+  function desmontarArquivo() {
+    if (!el) return;
+    try { el.pause(); el.removeAttribute('src'); el.load(); } catch (e) {}
+  }
+
+  /* --------------------------------------------- ambiente gerado na hora
+
+     Um pad de tres notas que troca de acorde a cada 8 s, mais alguns
+     toques esparsos de uma escala pentatonica. Pentatonica porque
+     qualquer combinacao dela soa consonante: nao tem como sair errado
+     no meio da apresentacao.                                             */
+
+  function iniciarGerado() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return false;
+
+    if (!ctx) {
+      ctx = new AC();
+      mestre = ctx.createGain();
+      mestre.gain.value = 0;
+
+      var filtro = ctx.createBiquadFilter();
+      filtro.type = 'lowpass';
+      filtro.frequency.value = 1750;
+      filtro.Q.value = 0.6;
+
+      mestre.connect(filtro);
+      filtro.connect(ctx.destination);
+    }
+    if (ctx.state === 'suspended') ctx.resume();
+    if (gerador) return true;
+
+    var escala = [0, 2, 4, 7, 9];            // pentatonica maior
+    var acordes = [0, -3, -5, 2];            // sequencia de raizes, em semitons
+    var base = 174.6;                        // fa3
+    var t = ctx.currentTime + 0.3;
+    var compasso = 0;
+
+    function hz(st) { return base * Math.pow(2, st / 12); }
+
+    function nota(freq, quando, dur, vol, tipo) {
+      var o = ctx.createOscillator(), g = ctx.createGain();
+      o.type = tipo;
+      o.frequency.value = freq;
+      g.gain.setValueAtTime(0.0001, quando);
+      g.gain.linearRampToValueAtTime(vol, quando + dur * 0.3);
+      g.gain.exponentialRampToValueAtTime(0.0001, quando + dur);
+      o.connect(g); g.connect(mestre);
+      o.start(quando);
+      o.stop(quando + dur + 0.06);
+    }
+
+    function proximoCompasso() {
+      var raiz = acordes[compasso % acordes.length];
+
+      // o pad sustentado
+      var triade = [0, 4, 7];
+      for (var i = 0; i < triade.length; i++) {
+        nota(hz(raiz + triade[i] - 12), t, 9, 0.075, 'sine');
+      }
+
+      // toques soltos por cima
+      for (var j = 0; j < 6; j++) {
+        if (Math.random() > 0.5) {
+          var grau = escala[Math.floor(Math.random() * escala.length)];
+          var oitava = Math.random() < 0.4 ? 12 : 0;
+          nota(hz(raiz + grau + oitava), t + j * 1.3 + Math.random() * 0.35,
+               2.4, 0.05, 'triangle');
+        }
+      }
+
+      t += 8;
+      compasso++;
+    }
+
+    proximoCompasso();
+    gerador = setInterval(function () {
+      if (!ctx) return;
+      // mantem sempre uns 10 s agendados a frente
+      while (t - ctx.currentTime < 10) proximoCompasso();
+    }, 1500);
+
+    return true;
+  }
+
+  function pararGerado() {
+    clearInterval(gerador);
+    gerador = null;
+  }
+
+  /* ------------------------------------------------------------- publico */
+
+  return {
+    /* Recebe os audios achados na pasta. Chamado a cada sincronizacao. */
+    definirFaixasDoDrive: function (lista) {
+      var novas = (lista || []).map(function (a) {
+        return { nome: a.nome, urls: (a.urls && a.urls.length ? a.urls : [a.url]) };
+      });
+
+      if (!novas.length && window.CFG && CFG.musicaUrl) {
+        var m = CFG.musicaUrl;
+        novas = (typeof m === 'string' ? [m] : m).map(function (u) {
+          return { nome: String(u).split('/').pop(), urls: [u] };
+        });
+      }
+
+      var mudou = novas.length !== faixas.length;
+      faixas = novas;
+
+      if (ligada && faixas.length) {
+        prepararElemento();
+        pararGerado();
+        if (mudou || !el.src) tocarFaixa(0);
+      }
+    },
+
+    /* De onde a musica esta saindo, em uma frase, para mostrar no menu. */
+    descricao: function () {
+      if (!faixas.length) return 'som ambiente gerado no navegador';
+      if (faixas.length === 1) return faixas[0].nome.replace(/\.[a-z0-9]+$/i, '');
+      return faixas.length + ' músicas da pasta';
+    },
+
+    temArquivo: function () { return faixas.length > 0; },
+
+    ligar: function () {
+      ligada = true;
+      if (faixas.length) {
+        prepararElemento();
+        pararGerado();
+        if (!el.src) tocarFaixa(0);
+        else el.play().catch(function () {});
+      } else {
+        iniciarGerado();
+      }
+      aplicarVolume(false);
+    },
+
+    desligar: function () {
+      ligada = false;
+      aplicarVolume(false);
+      // deixa a rampa terminar antes de cortar de vez
+      setTimeout(function () {
+        if (ligada) return;
+        desmontarArquivo();
+        pararGerado();
+      }, 1000);
+    },
+
+    estaLigada: function () { return ligada; },
+
+    definirVolume: function (v) {
+      volume = Math.max(0, Math.min(1, v));
+      aplicarVolume(true);
+    },
+
+    /* true enquanto um video com som estiver na tela */
+    abafar: function (sim) {
+      if (abafada === !!sim) return;
+      abafada = !!sim;
+      aplicarVolume(false);
+    }
+  };
+})();
+</script>
+<script>
+/* Monta as URLs de cada item a partir do id do arquivo no Drive.
+   Compartilhado pelas fontes "web" (JSONP) e "apps script".
+
+   Item de entrada  : { id, nome, tipo, tamanho, pasta, criado }
+   Item de saida    : + { urls[], urlThumb, urlIframe }
+
+   urls[] e uma lista de tentativas em ordem: o motor usa a primeira que
+   carregar. Imagem e video do Drive nao tem uma URL unica que funcione
+   sempre, entao vale ter plano B. */
+
+function montarMidia(f) {
+  var id = f.id;
+  var tipo = f.tipo || 'imagem';
+
+  var item = {
+    id: id,
+    nome: f.nome || f.name || '',
+    tipo: tipo,
+    tamanho: f.tamanho || 0,
+    pasta: f.pasta || '',
+    criado: f.criado || 0
+  };
+
+  if (tipo === 'imagem') {
+    item.urls = [
+      'https://lh3.googleusercontent.com/d/' + id + '=w2048',
+      'https://drive.google.com/thumbnail?id=' + id + '&sz=w2048'
+    ];
+    item.urlThumb = 'https://lh3.googleusercontent.com/d/' + id + '=w400';
+  } else {
+    // video e audio saem pelo endpoint de download do Drive; o <video>/<audio>
+    // aceita cross-origin sem CORS, e o servidor responde a Range (permite pular)
+    item.urls = [
+      'https://drive.usercontent.google.com/download?id=' + id + '&export=download&confirm=t',
+      'https://drive.google.com/uc?export=download&id=' + id
+    ];
+    // ultimo recurso para video: o player do proprio Drive, dentro de um iframe
+    item.urlIframe = 'https://drive.google.com/file/d/' + id + '/preview';
+    item.urlThumb = 'https://drive.google.com/thumbnail?id=' + id + '&sz=w400';
+  }
+
+  // compatibilidade com o codigo antigo
+  item.url = item.urls[0];
+  item.urlAlt = item.urls[1];
+  return item;
+}
+</script>
+<script>
+/* Fonte dos arquivos: funcao listarFotos() do Codigo.gs, rodando no servidor
+   do Apps Script. Nao existe chave de API aqui - quem le a pasta e a sua conta
+   Google. O servidor manda so { id, nome, tipo, tamanho, pasta, criado };
+   as URLs sao montadas aqui pelo montarMidia(). */
 function carregarFotos() {
   return new Promise(function (res, rej) {
     google.script.run
       .withSuccessHandler(function (lista) {
-        res((lista || []).map(function (f) {
-          return {
-            id: f.id,
-            nome: f.nome,
-            pasta: f.pasta || '',
-            criado: f.criado || 0,
-            url: 'https://lh3.googleusercontent.com/d/' + f.id + '=w2048',
-            urlThumb: 'https://lh3.googleusercontent.com/d/' + f.id + '=w400',
-            urlAlt: 'https://drive.google.com/thumbnail?id=' + f.id + '&sz=w2048'
-          };
-        }));
+        res((lista || []).map(montarMidia));
       })
       .withFailureHandler(function (e) {
         rej(new Error(e && e.message ? e.message : String(e)));
@@ -396,28 +865,43 @@ function carregarFotos() {
 /* =========================================================================
    Motor do slideshow - compartilhado pelas 3 versoes (web / apps-script / offline).
    Depende de uma funcao global carregarFotos() que devolve uma Promise com:
-     [{ id, nome, pasta?, url, urlThumb?, urlAlt? }, ...]
+     [{ id, nome, tipo, tamanho, pasta, criado, urls[], urlThumb, urlIframe }, ...]
+   tipo: 'imagem' | 'video' | 'audio'
 
-   Telas: menu -> (slideshow | galeria -> slideshow em modo navegacao)
+   Telas: menu -> (slideshow | galeria -> visualizador)
    ========================================================================= */
 (function () {
   'use strict';
 
   var PADRAO = {
     titulo: 'Fotos',
-    segundos: 7,          // tempo de cada foto na tela
-    fade: 1500,           // crossfade em ms (so no avanco automatico)
+    segundos: 3,          // tempo de cada FOTO na tela (video usa a propria duracao)
+    fade: 1200,           // crossfade em ms (so no avanco automatico)
     atualizarACada: 180,  // de quantos em quantos segundos reconsulta a pasta (0 = nunca)
-    novasNaFrente: true,  // foto nova entra logo depois da atual em vez de no fim da fila
-    embaralhar: true,     // ordem aleatoria no slideshow
+    novasNaFrente: true,  // arquivo novo entra logo depois do atual em vez de no fim
+    embaralhar: true,     // ordem aleatoria (sem repetir: veja "baralho" abaixo)
     pularMenu: false,     // true = abre direto no slideshow, sem a tela inicial
-    baixarTudo: true,     // baixa TODAS as imagens em segundo plano, assim que a pagina abre
+
+    incluirVideos: true,  // toca os videos da pasta junto com as fotos
+    segundosVideo: 30,    // so vale para video que caiu no player do Drive (iframe)
+    maxSegundosVideo: 0,  // 0 = deixa o video inteiro; >0 corta nesse tempo
+
+    musica: false,        // trilha de fundo ligada ao abrir
+    volume: 0.35,
+    musicaUrl: '',        // mp3 avulso; vazio = usa audios da pasta ou som gerado
+
+    baixarTudo: true,     // baixa as imagens em segundo plano assim que a pagina abre
     baixarDeCadaVez: 4,   // quantos downloads simultaneos no segundo plano
+
     mostrarNome: false,   // nome do arquivo no canto inferior esquerdo
     mostrarContador: true,
     prefixoIA: 'IA_',     // arquivos com esse prefixo ganham o selo
-    tituloSelo: 'processada com IA'
+    tituloSelo: 'processada com IA',
+
+    lembrarAjustes: true  // guarda o que foi mexido no painel, neste navegador
   };
+
+  var CHAVE_AJUSTES = 'slideshow-ajustes-v1';
 
   var CFG = {};
   for (var k in PADRAO) CFG[k] = PADRAO[k];
@@ -427,15 +911,34 @@ function carregarFotos() {
   var $ = function (s) { return document.querySelector(s); };
 
   var camadas, cam = 0;
-  var fotos = [];
-  var idx = -1;
+
+  var todos = [];        // tudo que veio da fonte, na ordem da pasta
+  var itens = [];        // so o que entra no slideshow (imagem + video, se ligado)
+  var audios = [];       // arquivos de musica da pasta
+
+  /* --- o baralho ---------------------------------------------------------
+     fila       = o que ainda falta mostrar NESTA rodada
+     historico  = o que ja passou pela tela, na ordem, com a rodada de cada um
+     histPos    = onde estamos dentro do historico (a seta esquerda anda aqui)
+     Enquanto a fila nao esvaziar, nada repete. Quando esvazia, embaralha de
+     novo e comeca outra rodada - garantindo que TODAS passaram antes.
+     O historico atravessa a virada de rodada, senao a seta esquerda perderia
+     o que estava na tela um segundo atras.                                  */
+  var fila = [], historico = [], histPos = -1;
+  var rodada = 1, naRodada = 0;
+  var MAX_HISTORICO = 400;
+
+  var atual = null;
+  var navLista = [], navIdx = 0;   // modo galeria: percorre na ordem da pasta
+
   var tela = 'carregando';   // 'menu' | 'galeria' | 'slideshow'
-  var origem = 'menu';       // de onde o slideshow foi aberto
+  var origem = 'menu';
   var modoNav = false;       // true = veio da galeria: nao avanca sozinho
   var pausado = false;
-  var timerFoto = null, timerToast = null, timerCursor = null;
+  var timerItem = null, timerToast = null, timerCursor = null, timerAudio = null;
   var trocando = false;
-  var gradeMontada = 0;      // quantas celulas ja estao na grade
+  var gradeMontada = 0;
+  var token = 0;             // invalida callbacks de troca antiga
 
   /* ---------------------------------------------------------------- util */
 
@@ -447,10 +950,14 @@ function carregarFotos() {
     return arr;
   }
 
-  function ehIA(foto) {
-    return !!(CFG.prefixoIA && foto.nome &&
-      foto.nome.toUpperCase().indexOf(CFG.prefixoIA.toUpperCase()) === 0);
+  function ehIA(item) {
+    return !!(CFG.prefixoIA && item && item.nome &&
+      item.nome.toUpperCase().indexOf(CFG.prefixoIA.toUpperCase()) === 0);
   }
+
+  function ehVideo(item) { return !!item && item.tipo === 'video'; }
+
+  function plural(n, um, muitos) { return n + ' ' + (n === 1 ? um : muitos); }
 
   function toast(msg) {
     var el = $('#toast');
@@ -468,23 +975,145 @@ function carregarFotos() {
     el.classList.remove('off');
   }
 
+  /* ------------------------------------------------------------- ajustes */
+
+  function lerAjustesSalvos() {
+    if (!CFG.lembrarAjustes) return;
+    try {
+      var s = JSON.parse(localStorage.getItem(CHAVE_AJUSTES) || 'null');
+      if (!s) return;
+      if (typeof s.segundos === 'number') CFG.segundos = s.segundos;
+      if (typeof s.embaralhar === 'boolean') CFG.embaralhar = s.embaralhar;
+      if (typeof s.incluirVideos === 'boolean') CFG.incluirVideos = s.incluirVideos;
+      if (typeof s.musica === 'boolean') CFG.musica = s.musica;
+      if (typeof s.volume === 'number') CFG.volume = s.volume;
+    } catch (e) {}
+  }
+
+  function salvarAjustes() {
+    if (!CFG.lembrarAjustes) return;
+    try {
+      localStorage.setItem(CHAVE_AJUSTES, JSON.stringify({
+        segundos: CFG.segundos,
+        embaralhar: CFG.embaralhar,
+        incluirVideos: CFG.incluirVideos,
+        musica: CFG.musica,
+        volume: CFG.volume
+      }));
+    } catch (e) {}
+  }
+
+  function marcarSegmento(idSeg, ligado) {
+    var bs = $(idSeg).querySelectorAll('button');
+    for (var i = 0; i < bs.length; i++) {
+      bs[i].classList.toggle('on', (bs[i].getAttribute('data-v') === '1') === !!ligado);
+    }
+  }
+
+  function pintarAjustes() {
+    $('#tempo-val').textContent = CFG.segundos + 's';
+    $('#tempo-menos').disabled = CFG.segundos <= 1;
+    $('#tempo-mais').disabled = CFG.segundos >= 30;
+    marcarSegmento('#seg-ordem', CFG.embaralhar);
+    marcarSegmento('#seg-videos', CFG.incluirVideos);
+    marcarSegmento('#seg-musica', CFG.musica);
+    $('#volume').value = Math.round(CFG.volume * 100);
+    $('#volume').disabled = !CFG.musica;
+
+    var nv = contarVideos();
+    $('#seg-videos').style.opacity = nv ? '1' : '.4';
+    $('#nota-musica').textContent = CFG.musica
+      ? 'tocando: ' + Trilha.descricao() +
+        (nv ? '  ·  abaixa sozinha quando entrar um vídeo com som' : '')
+      : (Trilha.temArquivo()
+          ? 'a pasta tem música: ' + Trilha.descricao()
+          : 'sem música na pasta — se ligar, o navegador gera um som ambiente');
+
+    $('#sub-slideshow').textContent = CFG.embaralhar
+      ? 'ordem aleatória, sem repetir nenhuma'
+      : 'na ordem da pasta';
+  }
+
+  function ligarAjustes() {
+    $('#tempo-menos').addEventListener('click', function () {
+      CFG.segundos = Math.max(1, CFG.segundos - 1);
+      salvarAjustes(); pintarAjustes();
+    });
+    $('#tempo-mais').addEventListener('click', function () {
+      CFG.segundos = Math.min(30, CFG.segundos + 1);
+      salvarAjustes(); pintarAjustes();
+    });
+
+    $('#seg-ordem').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      CFG.embaralhar = b.getAttribute('data-v') === '1';
+      salvarAjustes(); novaRodada(true); pintarAjustes();
+    });
+
+    $('#seg-videos').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      CFG.incluirVideos = b.getAttribute('data-v') === '1';
+      salvarAjustes(); reconstruirItens(); novaRodada(true);
+      atualizaMenu(); montarGrade(true);
+    });
+
+    $('#seg-musica').addEventListener('click', function (e) {
+      var b = e.target.closest('button'); if (!b) return;
+      alternarMusica(b.getAttribute('data-v') === '1');
+    });
+
+    $('#volume').addEventListener('input', function () {
+      CFG.volume = (+this.value) / 100;
+      Trilha.definirVolume(CFG.volume);
+      salvarAjustes();
+    });
+    $('#volume').addEventListener('change', salvarAjustes);
+  }
+
+  function alternarMusica(ligar) {
+    CFG.musica = (ligar === undefined) ? !CFG.musica : !!ligar;
+    if (CFG.musica) { Trilha.definirVolume(CFG.volume); Trilha.ligar(); }
+    else Trilha.desligar();
+    salvarAjustes();
+    pintarAjustes();
+    return CFG.musica;
+  }
+
   /* --------------------------------------------------------------- telas */
 
   function irPara(nova) {
+    var antes = tela;
     tela = nova;
     document.body.className =
       (document.body.classList.contains('sem-cursor') ? 'sem-cursor ' : '') + 'tela-' + nova;
     $('#aviso').classList.add('off');
 
-    clearTimeout(timerFoto);
+    clearTimeout(timerItem);
+    if (antes === 'slideshow' && nova !== 'slideshow') pararMidias();
+
     if (nova === 'slideshow' && !modoNav && !pausado) agenda();
     if (nova === 'galeria') montarGrade();
     if (nova === 'menu') atualizaMenu();
   }
 
+  function contarVideos() {
+    var n = 0;
+    for (var i = 0; i < todos.length; i++) if (todos[i].tipo === 'video') n++;
+    return n;
+  }
+
   function atualizaMenu() {
     $('#menu-titulo').textContent = CFG.titulo;
-    $('#menu-conta').textContent = fotos.length;
+
+    var fotos = 0, videos = contarVideos();
+    for (var i = 0; i < todos.length; i++) if (todos[i].tipo === 'imagem') fotos++;
+
+    var partes = [plural(fotos, 'imagem', 'imagens')];
+    if (videos) partes.push(plural(videos, 'vídeo', 'vídeos'));
+    if (audios.length) partes.push(plural(audios.length, 'música', 'músicas'));
+    $('#menu-conta').textContent = partes.join('  ·  ') + ' na pasta';
+
+    pintarAjustes();
     atualizaProgresso();
   }
 
@@ -497,26 +1126,67 @@ function carregarFotos() {
 
   /* ------------------------------------------------------ pre-carregamento */
 
-  function precarregar(foto) {
-    if (foto.urlOk) return Promise.resolve(true);
-    var tentativas = [foto.url, foto.urlAlt].filter(Boolean);
+  function precarregarImagem(item) {
+    if (item.urlOk) return Promise.resolve(true);
+    var tentativas = (item.urls || [item.url]).filter(Boolean);
     return new Promise(function (res) {
       var i = 0;
       (function tenta() {
-        if (i >= tentativas.length) { foto.quebrada = true; return res(false); }
+        if (i >= tentativas.length) { item.quebrada = true; return res(false); }
         var src = tentativas[i++];
         var im = new Image();
         var t = setTimeout(function () { im.onload = im.onerror = null; tenta(); }, 9000);
-        im.onload = function () { clearTimeout(t); foto.urlOk = src; res(true); };
+        im.onload = function () { clearTimeout(t); item.urlOk = src; res(true); };
         im.onerror = function () { clearTimeout(t); tenta(); };
         im.src = src;
       })();
     });
   }
 
+  /* Video: so descobre qual endereco funciona e quanto tempo dura. Nao baixa
+     o arquivo inteiro de proposito - um video de 200 MB derrubaria a pagina.
+     Se nenhum endereco servir, cai no player do proprio Drive (iframe). */
+  function precarregarVideo(item) {
+    if (item.urlOk || item.usarIframe) return Promise.resolve(true);
+    var tentativas = (item.urls || [item.url]).filter(Boolean);
+    return new Promise(function (res) {
+      var i = 0;
+      (function tenta() {
+        if (i >= tentativas.length) {
+          if (item.urlIframe) { item.usarIframe = true; return res(true); }
+          item.quebrada = true;
+          return res(false);
+        }
+        var src = tentativas[i++];
+        var v = document.createElement('video');
+        v.preload = 'metadata';
+        v.muted = true;
+        var fim = false;
+        var t = setTimeout(function () { if (!fim) { fim = true; limpa(); tenta(); } }, 12000);
+        function limpa() {
+          clearTimeout(t);
+          v.onloadedmetadata = v.onerror = null;
+          try { v.removeAttribute('src'); v.load(); } catch (e) {}
+        }
+        v.onloadedmetadata = function () {
+          if (fim) return; fim = true;
+          item.duracao = isFinite(v.duration) ? v.duration : 0;
+          item.urlOk = src;
+          limpa(); res(true);
+        };
+        v.onerror = function () { if (fim) return; fim = true; limpa(); tenta(); };
+        v.src = src;
+      })();
+    });
+  }
+
+  function precarregar(item) {
+    return ehVideo(item) ? precarregarVideo(item) : precarregarImagem(item);
+  }
+
   /* ------------------------------------------- baixar tudo em 2o plano
 
-     Puxa todas as imagens assim que a pagina abre, antes de precisar delas.
+     Puxa as imagens assim que a pagina abre, antes de precisar delas.
      Nao guardamos os objetos Image em memoria de proposito: o que importa e
      que os bytes fiquem no cache do navegador. Assim uma pasta grande nao
      estoura a RAM, e se a internet cair no meio da apresentacao as fotos ja
@@ -524,27 +1194,32 @@ function carregarFotos() {
 
   var prefetchRodando = false;
 
-  function jaResolvida(f) { return !!(f.urlOk || f.quebrada); }
-
-  function contaProntas() {
-    var n = 0;
-    for (var i = 0; i < fotos.length; i++) if (jaResolvida(fotos[i])) n++;
-    return n;
-  }
+  function jaResolvido(f) { return !!(f.urlOk || f.usarIframe || f.quebrada); }
 
   function atualizaProgresso() {
     var el = $('#menu-rodape');
     if (!el) return;
     var nota = notaAtualizacao();
 
-    if (!CFG.baixarTudo || !fotos.length) { el.textContent = nota; return; }
+    if (!CFG.baixarTudo || !itens.length) { el.textContent = nota; return; }
 
-    var n = contaProntas(), tot = fotos.length;
-    if (n >= tot) {
-      el.textContent = tot + ' imagens já baixadas — a passagem não depende mais da internet' +
+    var imgs = 0, prontas = 0;
+    for (var i = 0; i < itens.length; i++) {
+      if (itens[i].tipo !== 'imagem') continue;
+      imgs++;
+      if (jaResolvido(itens[i])) prontas++;
+    }
+
+    if (!imgs) { el.textContent = nota; return; }
+
+    if (prontas >= imgs) {
+      var extra = contarVideos()
+        ? ' — vídeos tocam direto do Drive, sem baixar antes'
+        : ' — a passagem não depende mais da internet';
+      el.textContent = imgs + ' imagens já baixadas' + extra +
         (nota ? '  ·  ' + nota : '');
     } else {
-      el.textContent = 'baixando tudo para não depender da conexão…  ' + n + ' / ' + tot;
+      el.textContent = 'baixando tudo para não depender da conexão…  ' + prontas + ' / ' + imgs;
     }
   }
 
@@ -556,9 +1231,9 @@ function carregarFotos() {
     var limite = Math.max(1, CFG.baixarDeCadaVez);
 
     function passo() {
-      while (ativos < limite && i < fotos.length) {
-        var f = fotos[i++];
-        if (jaResolvida(f)) continue;
+      while (ativos < limite && i < itens.length) {
+        var f = itens[i++];
+        if (jaResolvido(f)) continue;
         ativos++;
         precarregar(f).then(function () {
           ativos--;
@@ -566,7 +1241,7 @@ function carregarFotos() {
           passo();
         });
       }
-      if (ativos === 0 && i >= fotos.length) {
+      if (ativos === 0 && i >= itens.length) {
         prefetchRodando = false;
         atualizaProgresso();
       }
@@ -574,43 +1249,163 @@ function carregarFotos() {
     passo();
   }
 
-  /* ----------------------------------------------------------- slideshow */
+  /* ------------------------------------------------------------- baralho */
 
-  function atualizaLegendas(foto) {
-    $('#selo-txt').textContent = CFG.tituloSelo;
-    $('#selo').classList.toggle('on', ehIA(foto));
+  function reconstruirItens() {
+    itens = todos.filter(function (f) {
+      if (f.tipo === 'audio') return false;
+      if (f.tipo === 'video' && !CFG.incluirVideos) return false;
+      return true;
+    });
+  }
 
-    var elNome = $('#nome');
-    if (CFG.mostrarNome && foto.nome) {
-      var limpo = foto.nome.replace(/\.[a-z0-9]+$/i, '');
-      elNome.textContent = foto.pasta ? foto.pasta + '  ·  ' + limpo : limpo;
-      elNome.classList.remove('sumiu');
-    } else {
-      elNome.classList.add('sumiu');
+  function novaRodada(reiniciando) {
+    var lista = itens.filter(function (f) { return !f.quebrada; });
+    if (CFG.embaralhar) embaralha(lista);
+
+    // nao emendar a rodada nova com a mesma que acabou de sair da tela
+    if (lista.length > 1 && atual && lista[0].id === atual.id) {
+      var t = lista[0]; lista[0] = lista[1]; lista[1] = t;
     }
 
-    var hud = $('#hud');
-    if (CFG.mostrarContador && fotos.length) {
-      hud.textContent = (idx + 1) + ' / ' + fotos.length;
-      hud.classList.remove('sumiu');
+    fila = lista;
+    naRodada = 0;
+    if (reiniciando) { historico = []; histPos = -1; rodada = 1; }
+  }
+
+  /* Devolve o proximo item, tirando da fila. Nunca repete dentro da rodada. */
+  function puxarDaFila() {
+    var voltas = 0;
+    while (voltas++ <= itens.length + 2) {
+      if (!fila.length) {
+        if (!itens.length) return null;
+        rodada++;
+        novaRodada(false);
+        if (!fila.length) return null;
+      }
+      var it = fila.shift();
+      if (!it || it.quebrada) continue;
+
+      historico.push({ item: it, n: ++naRodada, rodada: rodada });
+      if (historico.length > MAX_HISTORICO) historico.shift();
+      histPos = historico.length - 1;
+      return it;
+    }
+    return null;
+  }
+
+  /* Entram itens novos no meio de uma rodada ja em andamento. */
+  function encaixarNovos(novos) {
+    if (!novos.length) return;
+    var entram = novos.filter(function (f) {
+      return f.tipo !== 'audio' && (f.tipo !== 'video' || CFG.incluirVideos);
+    });
+    if (!entram.length) return;
+
+    if (CFG.embaralhar) embaralha(entram);
+
+    if (CFG.novasNaFrente && tela === 'slideshow' && !modoNav) {
+      // logo depois da atual, para a novidade aparecer na hora
+      Array.prototype.splice.apply(fila, [Math.min(1, fila.length), 0].concat(entram));
+    } else if (CFG.embaralhar) {
+      // espalha pelo resto da rodada, sem furar a regra de nao repetir
+      for (var i = 0; i < entram.length; i++) {
+        fila.splice(Math.floor(Math.random() * (fila.length + 1)), 0, entram[i]);
+      }
     } else {
-      hud.classList.add('sumiu');
+      fila = fila.concat(entram);
     }
   }
 
-  function agenda() {
-    clearTimeout(timerFoto);
-    if (pausado || modoNav || tela !== 'slideshow') return;
-    timerFoto = setTimeout(function () { ir(1, false); }, CFG.segundos * 1000);
+  function tirarDaFila(sumiram) {
+    if (!sumiram.length) return;
+    var fora = {};
+    for (var i = 0; i < sumiram.length; i++) fora[sumiram[i].id] = true;
+    fila = fila.filter(function (f) { return !fora[f.id]; });
+    var antes = historico.length;
+    historico = historico.filter(function (h, n) {
+      if (!fora[h.item.id]) return true;
+      if (n <= histPos) histPos--;
+      return false;
+    });
+    if (antes !== historico.length) histPos = Math.min(histPos, historico.length - 1);
+  }
+
+  /* --------------------------------------------------------- exibicao */
+
+  function camadaDe(i) { return camadas[i]; }
+
+  function limparCamada(el) {
+    var v = el.querySelector('video');
+    var f = el.querySelector('iframe');
+    try { v.pause(); } catch (e) {}
+    v.onended = v.onerror = v.onplaying = null;
+    if (v.getAttribute('src')) { v.removeAttribute('src'); try { v.load(); } catch (e) {} }
+    if (f.getAttribute('src')) f.removeAttribute('src');
+    el.classList.remove('mostra-img', 'mostra-video', 'mostra-iframe');
+    el.__item = null;
+  }
+
+  function pararMidias() {
+    for (var i = 0; i < camadas.length; i++) {
+      var v = camadas[i].querySelector('video');
+      try { v.pause(); } catch (e) {}
+      var f = camadas[i].querySelector('iframe');
+      if (f.getAttribute('src')) f.removeAttribute('src');
+    }
+    clearTimeout(timerAudio);
+    Trilha.abafar(false);
+  }
+
+  /* Monta o item dentro de uma camada, sem mexer na visibilidade. */
+  function montarNaCamada(el, item) {
+    if (el.__item === item) return;      // ja engatilhado pelo prepararProximo
+    limparCamada(el);
+    el.__item = item;
+
+    if (ehVideo(item)) {
+      if (item.usarIframe) {
+        el.querySelector('iframe').src = item.urlIframe;
+        el.classList.add('mostra-iframe');
+      } else {
+        var v = el.querySelector('video');
+        v.src = item.urlOk || item.urls[0];
+        v.currentTime = 0;
+        v.muted = false;
+        v.volume = 1;
+        el.classList.add('mostra-video');
+      }
+    } else {
+      el.querySelector('img').src = item.urlOk || item.urls[0];
+      el.classList.add('mostra-img');
+    }
+  }
+
+  /* Deixa o proximo item pronto na camada reserva: video ja carregado
+     significa que a troca acontece sem engasgo. */
+  function prepararProximo() {
+    var prox = fila.length ? fila[0] : null;
+    if (modoNav) prox = navLista[(navIdx + 1) % (navLista.length || 1)];
+    if (!prox || prox === atual) return;
+
+    precarregar(prox).then(function () {
+      // so engatilha se nesse meio tempo ele continuar sendo o proximo
+      var aindaEProximo = modoNav
+        ? navLista[(navIdx + 1) % (navLista.length || 1)] === prox
+        : fila[0] === prox;
+      if (!aindaEProximo) return;
+      if (ehVideo(prox) && !prox.usarIframe) montarNaCamada(camadas[1 - cam], prox);
+    });
   }
 
   // instantaneo = true -> troca seca, sem crossfade (setas, clique, galeria)
-  function trocarCamada(foto, instantaneo) {
+  function trocarCamada(item, instantaneo) {
     var prox = camadas[1 - cam], velha = camadas[cam];
+
+    montarNaCamada(prox, item);
 
     if (instantaneo) { prox.classList.add('instantaneo'); velha.classList.add('instantaneo'); }
 
-    prox.src = foto.urlOk;
     prox.classList.add('ativa');
     velha.classList.remove('ativa');
     cam = 1 - cam;
@@ -625,64 +1420,199 @@ function carregarFotos() {
         });
       });
     }
+
+    // a camada que saiu so e desmontada depois do fade, senao pisca.
+    // se nesse meio tempo o prepararProximo ja engatilhou outra coisa nela,
+    // deixa quieto - senao jogariamos fora o video que acabou de carregar
+    var itemQueSaiu = velha.__item;
+    var atrasoLimpeza = instantaneo ? 60 : CFG.fade + 120;
+    setTimeout(function () {
+      if (camadas[cam] !== velha && velha.__item === itemQueSaiu) limparCamada(velha);
+    }, atrasoLimpeza);
+
+    if (ehVideo(item)) tocarVideo(prox, item);
+    else { clearTimeout(timerAudio); Trilha.abafar(false); }
+  }
+
+  /* -------------------------------------------------------------- video */
+
+  function temAudio(v) {
+    if (typeof v.mozHasAudio === 'boolean') return v.mozHasAudio;
+    if (typeof v.webkitAudioDecodedByteCount === 'number') return v.webkitAudioDecodedByteCount > 0;
+    if (v.audioTracks && typeof v.audioTracks.length === 'number') return v.audioTracks.length > 0;
+    return true;
+  }
+
+  function tocarVideo(el, item) {
+    var meu = ++token;
+
+    if (item.usarIframe) {
+      // dentro do iframe o player e do Drive: nao da para saber quando acabou
+      Trilha.abafar(true);
+      if (!pausado && !modoNav) {
+        clearTimeout(timerItem);
+        timerItem = setTimeout(function () {
+          if (meu === token) ir(1, false);
+        }, Math.max(5, CFG.segundosVideo) * 1000);
+      }
+      return;
+    }
+
+    var v = el.querySelector('video');
+
+    // enquanto nao sabemos se o video tem som, abaixa a trilha por garantia
+    Trilha.abafar(true);
+    clearTimeout(timerAudio);
+    timerAudio = setTimeout(function () {
+      if (meu !== token) return;
+      Trilha.abafar(!v.muted && temAudio(v));
+    }, 900);
+
+    v.onended = function () {
+      if (meu !== token || modoNav) return;
+      Trilha.abafar(false);
+      ir(1, false);
+    };
+    v.onerror = function () {
+      if (meu !== token) return;
+      item.urlOk = null;
+      item.usarIframe = !!item.urlIframe;
+      if (!item.usarIframe) item.quebrada = true;
+      ir(1, true);
+    };
+
+    v.play().catch(function () {
+      // o navegador barrou o som sem gesto do usuario: toca mudo, que ele deixa
+      v.muted = true;
+      Trilha.abafar(false);
+      v.play().catch(function () {});
+    });
+
+    // rede de seguranca: se o "ended" nao vier, o slideshow nao pode travar
+    if (!pausado && !modoNav) {
+      var limite = CFG.maxSegundosVideo > 0
+        ? CFG.maxSegundosVideo
+        : (item.duracao > 0 ? item.duracao + 6 : 90);
+      clearTimeout(timerItem);
+      timerItem = setTimeout(function () {
+        if (meu === token) ir(1, false);
+      }, limite * 1000);
+    }
+  }
+
+  /* ---------------------------------------------------------- legendas */
+
+  function atualizaLegendas(item) {
+    $('#selo-txt').textContent = CFG.tituloSelo;
+    $('#selo').classList.toggle('on', ehIA(item));
+
+    var elNome = $('#nome');
+    if (CFG.mostrarNome && item.nome) {
+      var limpo = item.nome.replace(/\.[a-z0-9]+$/i, '');
+      elNome.textContent = item.pasta ? item.pasta + '  ·  ' + limpo : limpo;
+      elNome.classList.remove('sumiu');
+    } else {
+      elNome.classList.add('sumiu');
+    }
+
+    var hud = $('#hud');
+    if (CFG.mostrarContador && itens.length) {
+      var h = historico[histPos];
+      hud.textContent = modoNav
+        ? (navIdx + 1) + ' / ' + navLista.length
+        : ((h ? h.n : 1) + ' / ' + itens.length);
+      hud.classList.remove('sumiu');
+    } else {
+      hud.classList.add('sumiu');
+    }
+  }
+
+  function agenda() {
+    // o video ja marcou o proprio relogio dentro do tocarVideo(): mexer no
+    // timerItem aqui apagaria ele e o slideshow ficaria preso no video
+    if (ehVideo(atual) && !pausado && !modoNav && tela === 'slideshow') return;
+
+    clearTimeout(timerItem);
+    if (pausado || modoNav || tela !== 'slideshow') return;
+    if (ehVideo(atual)) return;
+    timerItem = setTimeout(function () { ir(1, false); }, CFG.segundos * 1000);
+  }
+
+  /* --------------------------------------------------------- navegacao */
+
+  function proximoItem(delta) {
+    if (modoNav) {
+      if (!navLista.length) return null;
+      navIdx = ((navIdx + delta) % navLista.length + navLista.length) % navLista.length;
+      return navLista[navIdx];
+    }
+
+    if (delta > 0) {
+      if (histPos < historico.length - 1) { histPos++; return historico[histPos].item; }
+      return puxarDaFila();
+    }
+
+    if (histPos > 0) { histPos--; return historico[histPos].item; }
+    return historico.length ? historico[histPos].item : null;
   }
 
   function ir(delta, instantaneo) {
     if (trocando) return;
-    clearTimeout(timerFoto);
+    clearTimeout(timerItem);
 
-    var vivas = 0;
-    for (var i = 0; i < fotos.length; i++) if (!fotos[i].quebrada) vivas++;
-    if (!vivas) {
-      aviso('Nenhuma imagem pôde ser exibida',
+    var vivos = 0;
+    for (var i = 0; i < itens.length; i++) if (!itens[i].quebrada) vivos++;
+    if (!vivos) {
+      aviso('Nenhum arquivo pôde ser exibido',
         'A pasta tem arquivos, mas nenhum carregou. Confira se o compartilhamento está como ' +
         '<code>Qualquer pessoa com o link</code>.', true);
       return;
     }
 
-    var voltas = 0, foto;
-    do {
-      idx = ((idx + delta) % fotos.length + fotos.length) % fotos.length;
-      foto = fotos[idx];
-      voltas++;
-    } while (foto && foto.quebrada && voltas <= fotos.length);
-    if (!foto) return;
+    var item = proximoItem(delta);
+    if (!item) return;
 
     trocando = true;
-    precarregar(foto).then(function (ok) {
+    precarregar(item).then(function (ok) {
       trocando = false;
       if (!ok) return ir(delta, instantaneo);
 
-      trocarCamada(foto, instantaneo);
-      atualizaLegendas(foto);
+      atual = item;
+      token++;                       // qualquer callback de video antigo morre aqui
+      trocarCamada(item, instantaneo);
+      atualizaLegendas(item);
       $('#aviso').classList.add('off');
       agenda();
-
-      var seg = fotos[(idx + 1) % fotos.length];
-      if (seg && seg !== foto) precarregar(seg);
+      prepararProximo();
     });
   }
 
-  function abrirSlideshow(de, posicao) {
+  function abrirSlideshow(de, itemInicial) {
     origem = de;
-    modoNav = (de === 'galeria');
+    modoNav = (de === 'galeria' && itemInicial !== undefined);
     pausado = false;
     $('#pausa').classList.remove('on');
     $('#dica').classList.remove('sumiu');
     setTimeout(function () { $('#dica').classList.add('sumiu'); }, 9000);
 
-    irPara('slideshow');
-    if (posicao === undefined) {
-      idx = -1;
-      ir(1, true);           // a primeira aparece direto, sem fade de abertura
+    if (modoNav) {
+      navLista = ordemGaleria();
+      navIdx = navLista.indexOf(itemInicial);
+      if (navIdx < 0) navIdx = 0;
+      navIdx--;                       // o ir(1) logo abaixo cai no item certo
     } else {
-      idx = posicao - 1;
-      ir(1, true);
+      novaRodada(true);
+      // a musica so consegue tocar a partir de um clique do usuario:
+      // este e o clique.
+      if (CFG.musica) { Trilha.definirVolume(CFG.volume); Trilha.ligar(); }
     }
+
+    irPara('slideshow');
+    ir(1, true);                      // a primeira aparece direto, sem fade de abertura
   }
 
   function voltar() {
-    clearTimeout(timerFoto);
+    clearTimeout(timerItem);
     if (tela === 'slideshow') irPara(origem);
     else if (tela === 'galeria') irPara('menu');
   }
@@ -691,49 +1621,66 @@ function carregarFotos() {
     if (tela !== 'slideshow' || modoNav) return;
     pausado = !pausado;
     $('#pausa').classList.toggle('on', pausado);
-    if (pausado) clearTimeout(timerFoto); else agenda();
+
+    var v = camadas[cam].querySelector('video');
+    if (ehVideo(atual) && !atual.usarIframe) {
+      if (pausado) { try { v.pause(); } catch (e) {} }
+      else { v.play().catch(function () {}); }
+    }
+
+    if (pausado) clearTimeout(timerItem);
+    else if (ehVideo(atual)) tocarVideo(camadas[cam], atual);
+    else agenda();
   }
 
   /* ------------------------------------------------------------- galeria */
 
   // a galeria mostra na ordem original da pasta, mesmo com o slideshow embaralhado
   function ordemGaleria() {
-    return fotos.slice().sort(function (a, b) { return (a.ord || 0) - (b.ord || 0); });
+    return itens.slice().sort(function (a, b) { return (a.ord || 0) - (b.ord || 0); });
   }
 
   function montarGrade(forcar) {
     var lista = ordemGaleria();
-    $('#galeria-conta').textContent = lista.length + (lista.length === 1 ? ' imagem' : ' imagens');
+    $('#galeria-conta').textContent = lista.length + (lista.length === 1 ? ' arquivo' : ' arquivos');
 
     if (!forcar && gradeMontada === lista.length) return;
     var grade = $('#grade');
     grade.innerHTML = '';
 
     if (!lista.length) {
-      grade.innerHTML = '<div class="vazio">Nenhuma imagem na pasta ainda.</div>';
+      grade.innerHTML = '<div class="vazio">Nenhum arquivo na pasta ainda.</div>';
       gradeMontada = 0;
       return;
     }
 
     var frag = document.createDocumentFragment();
     for (var i = 0; i < lista.length; i++) {
-      (function (foto, n) {
+      (function (item, n) {
         var cel = document.createElement('div');
-        cel.className = 'cel';
-        cel.title = (foto.pasta ? foto.pasta + '  ·  ' : '') + foto.nome;
+        cel.className = 'cel' + (ehVideo(item) ? ' video' : '');
+        cel.title = (item.pasta ? item.pasta + '  ·  ' : '') + item.nome;
 
         var im = document.createElement('img');
         im.loading = 'lazy';
         im.decoding = 'async';
-        im.alt = foto.nome || '';
+        im.alt = item.nome || '';
         im.onload = function () { im.classList.add('ok'); };
         im.onerror = function () {
-          if (foto.urlAlt && im.src !== foto.urlAlt) im.src = foto.urlAlt;
+          var alt = (item.urls || [])[1];
+          if (alt && im.src !== alt) im.src = alt;
         };
-        im.src = foto.urlThumb || foto.url;
+        if (item.urlThumb) im.src = item.urlThumb;
         cel.appendChild(im);
 
-        if (ehIA(foto)) {
+        if (ehVideo(item)) {
+          var pl = document.createElement('span');
+          pl.className = 'play';
+          pl.innerHTML = '&#9654;';
+          cel.appendChild(pl);
+        }
+
+        if (ehIA(item)) {
           var tg = document.createElement('span');
           tg.className = 'tag';
           tg.textContent = 'IA';
@@ -745,10 +1692,7 @@ function carregarFotos() {
         num.textContent = n;
         cel.appendChild(num);
 
-        cel.addEventListener('click', function () {
-          var pos = fotos.indexOf(foto);
-          if (pos >= 0) abrirSlideshow('galeria', pos);
-        });
+        cel.addEventListener('click', function () { abrirSlideshow('galeria', item); });
 
         frag.appendChild(cel);
       })(lista[i], i + 1);
@@ -757,7 +1701,7 @@ function carregarFotos() {
     gradeMontada = lista.length;
   }
 
-  /* ------------------------------------------------------ lista de fotos */
+  /* -------------------------------------------------- lista de arquivos */
 
   function sincronizar(primeira) {
     return Promise.resolve()
@@ -768,55 +1712,67 @@ function carregarFotos() {
         if (!lista.length) {
           if (primeira) {
             aviso('A pasta está vazia',
-              'Nenhuma imagem encontrada. Assim que as primeiras fotos entrarem no Drive, ' +
+              'Nenhum arquivo encontrado. Assim que as primeiras fotos entrarem no Drive, ' +
               'esta página as encontra sozinha — ela reconsulta a pasta a cada ' +
               Math.max(1, Math.round(CFG.atualizarACada / 60)) + ' min.', true);
           }
           return;
         }
 
-        var atual = fotos[idx];
         var jaTinha = {};
-        for (var i = 0; i < fotos.length; i++) jaTinha[fotos[i].id] = true;
+        for (var i = 0; i < todos.length; i++) jaTinha[todos[i].id] = true;
 
-        var idsAgora = {}, ordem = {}, novas = [];
+        var idsAgora = {}, novos = [];
         for (var j = 0; j < lista.length; j++) {
           var f = lista[j];
+          if (idsAgora[f.id]) continue;      // cinto e suspensorio contra repetida
           idsAgora[f.id] = true;
-          ordem[f.id] = j;                 // posicao na pasta, para a galeria
-          if (!jaTinha[f.id]) { f.ord = j; novas.push(f); }
+          f.ord = j;                         // posicao na pasta, para a galeria
+          if (!jaTinha[f.id]) novos.push(f);
         }
 
-        fotos = fotos.filter(function (f) { return idsAgora[f.id] || f === atual; });
-        for (var m = 0; m < fotos.length; m++) {
-          if (ordem[fotos[m].id] !== undefined) fotos[m].ord = ordem[fotos[m].id];
-        }
+        // preserva o estado (urlOk, duracao, quebrada) do que ja conheciamos
+        var antigos = {};
+        for (var m = 0; m < todos.length; m++) antigos[todos[m].id] = todos[m];
 
-        if (novas.length) {
-          if (CFG.embaralhar) embaralha(novas);
-          var pos = fotos.length;
-          if (!primeira && CFG.novasNaFrente && atual && tela === 'slideshow') {
-            pos = Math.min(fotos.indexOf(atual) + 2, fotos.length);
+        var sumiram = todos.filter(function (f) {
+          return !idsAgora[f.id] && f !== atual;
+        });
+
+        var novaTodos = [];
+        for (var n = 0; n < lista.length; n++) {
+          var f2 = lista[n];
+          if (antigos[f2.id]) {
+            antigos[f2.id].ord = f2.ord;
+            novaTodos.push(antigos[f2.id]);
+          } else {
+            novaTodos.push(f2);
           }
-          Array.prototype.splice.apply(fotos, [pos, 0].concat(novas));
         }
+        if (atual && !idsAgora[atual.id]) novaTodos.push(atual);
+        todos = novaTodos;
 
-        if (primeira && CFG.embaralhar) embaralha(fotos);
+        audios = todos.filter(function (f) { return f.tipo === 'audio'; });
+        Trilha.definirFaixasDoDrive(audios);
 
-        idx = atual ? fotos.indexOf(atual) : idx;
+        reconstruirItens();
+        tirarDaFila(sumiram);
 
         if (primeira) {
+          novaRodada(true);
           if (CFG.pularMenu) abrirSlideshow('menu');
           else irPara('menu');
         } else {
+          encaixarNovos(novos);
           if (tela === 'menu') atualizaMenu();
           if (tela === 'galeria') montarGrade(true);
-          if (novas.length) {
-            toast('+' + novas.length + (novas.length === 1 ? ' foto nova' : ' fotos novas'));
+          if (novos.length) {
+            var nf = novos.filter(function (f) { return f.tipo !== 'audio'; }).length;
+            if (nf) toast('+' + plural(nf, 'arquivo novo', 'arquivos novos'));
           }
         }
 
-        baixarTudo();   // pega tambem as que acabaram de entrar
+        baixarTudo();
       })
       .catch(function (e) {
         console.error(e);
@@ -838,6 +1794,12 @@ function carregarFotos() {
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') { e.preventDefault(); voltar(); return; }
 
+    if (e.key === 'm' || e.key === 'M') {
+      e.preventDefault();
+      toast(alternarMusica() ? 'música ligada' : 'música desligada');
+      return;
+    }
+
     if (tela === 'menu') {
       if (e.key === 'Enter') { e.preventDefault(); abrirSlideshow('menu'); }
       return;
@@ -848,12 +1810,14 @@ function carregarFotos() {
     else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { e.preventDefault(); ir(-1, true); }
     else if (e.key === ' ') { e.preventDefault(); togglePausa(); }
     else if (e.key === 'f' || e.key === 'F') { e.preventDefault(); telaCheia(); }
-    else if (e.key === 'r' || e.key === 'R') { sincronizar(false); toast('procurando fotos novas…'); }
+    else if (e.key === 'r' || e.key === 'R') { sincronizar(false); toast('procurando arquivos novos…'); }
   });
 
   document.addEventListener('click', function (e) {
     if (tela !== 'slideshow') return;
     if (e.target.closest && e.target.closest('button')) return;
+    // clicar em cima de um video e para controlar o video, nao para avancar
+    if (e.target.tagName === 'VIDEO' || e.target.tagName === 'IFRAME') return;
     ir(1, true);
   });
 
@@ -872,8 +1836,12 @@ function carregarFotos() {
     camadas = [$('#a'), $('#b')];
     document.documentElement.style.setProperty('--fade', CFG.fade + 'ms');
 
+    lerAjustesSalvos();
+    ligarAjustes();
+    pintarAjustes();
+
     $('#bt-slideshow').addEventListener('click', function () { abrirSlideshow('menu'); });
-    $('#bt-slideshow-2').addEventListener('click', function () { abrirSlideshow('galeria'); modoNav = false; agenda(); });
+    $('#bt-slideshow-2').addEventListener('click', function () { abrirSlideshow('galeria'); });
     $('#bt-galeria').addEventListener('click', function () { irPara('galeria'); });
     $('#bt-voltar').addEventListener('click', voltar);
     $('#bt-voltar-menu').addEventListener('click', voltar);
@@ -884,6 +1852,15 @@ function carregarFotos() {
     if (CFG.atualizarACada > 0) {
       setInterval(function () { sincronizar(false); }, CFG.atualizarACada * 1000);
     }
+
+    // atalho de diagnostico: window.__estado() no console mostra o baralho
+    window.__estado = function () {
+      return {
+        total: itens.length, rodada: rodada,
+        naRodada: historico[histPos] ? historico[histPos].n : 0, faltam: fila.length,
+        atual: atual && atual.nome, musica: Trilha.estaLigada()
+      };
+    };
   }
 
   if (document.readyState === 'loading') {

@@ -1,6 +1,7 @@
 /* =====================================================================
    Slideshow automatico de uma pasta do Google Drive (com subpastas).
-   Cole este arquivo em script.google.com como "Codigo.gs".
+   Le imagens, videos e musicas. Cole este arquivo em script.google.com
+   como "Codigo.gs".
    ===================================================================== */
 
 // ID da pasta raiz no Drive.
@@ -17,6 +18,16 @@ var PROFUNDIDADE_MAX = 8;
 //   'pasta' -> agrupadas por subpasta, em ordem alfabetica
 var ORDEM = 'data';
 
+// Joga fora copias do mesmo arquivo. Duas entradas com o MESMO tamanho em bytes
+// e o mesmo nome (ignorando "(1)", " - copia" e maiusculas) contam como uma so.
+// E o que impede a mesma foto de aparecer duas vezes no slideshow.
+var TIRAR_DUPLICADAS = true;
+
+// Tambem considera duplicada quando o tamanho em bytes bate mas o nome mudou
+// (ex.: a mesma foto salva como "IMG_2201.jpg" e "WhatsApp Image.jpg").
+// Deixe false se a pasta tiver fotos diferentes de tamanho identico.
+var DUPLICADA_SO_PELO_TAMANHO = false;
+
 // Quantos segundos a lista fica em cache no servidor do Apps Script.
 // Segura o custo quando varias pessoas abrem o link ao mesmo tempo.
 // Se a pasta for enorme e a pagina demorar para abrir, aumente para 120.
@@ -25,7 +36,7 @@ var CACHE_SEG = 60;
 
 function doGet(e) {
   // Com ?callback=xxx devolve so a lista, em JavaScript (JSONP).
-  // E assim que a versao hospedada no Netlify pega as fotos sem chave de API.
+  // E assim que a versao hospedada no GitHub Pages pega tudo sem chave de API.
   var cb = e && e.parameter && e.parameter.callback;
   if (cb) {
     if (!/^[A-Za-z0-9_$]{1,64}$/.test(cb)) throw new Error('callback invalido');
@@ -43,21 +54,23 @@ function doGet(e) {
 
 
 /**
- * Devolve todas as imagens da pasta raiz e das subpastas.
- * Chamada pelo navegador via google.script.run.
+ * Devolve tudo que da para tocar na pasta raiz e nas subpastas:
+ * imagens, videos e audios. O tipo vem no campo "tipo".
  */
 function listarFotos() {
   var cache = CacheService.getScriptCache();
-  var guardado = cache.get('fotos');
+  var guardado = cache.get('midias_v2');
   if (guardado) {
     try { return JSON.parse(guardado); } catch (e) { /* cache ruim, refaz */ }
   }
 
   var achadas = [];
-  var arquivosVistos = {};   // evita a mesma foto duas vezes (arquivo em 2 pastas)
+  var arquivosVistos = {};   // mesmo arquivo alcancado por dois caminhos
   var pastasVistas = {};     // evita loop se houver atalho circular
+  var conteudoVisto = {};    // copias do mesmo arquivo com ids diferentes
 
-  varrer(DriveApp.getFolderById(ID_PASTA), '', 0, achadas, arquivosVistos, pastasVistas);
+  varrer(DriveApp.getFolderById(ID_PASTA), '', 0,
+         achadas, arquivosVistos, pastasVistas, conteudoVisto);
 
   if (ORDEM === 'pasta') {
     achadas.sort(function (a, b) {
@@ -72,19 +85,45 @@ function listarFotos() {
   // o cache do Apps Script aceita ate 100 KB por chave; se estourar, so nao cacheia
   try {
     var txt = JSON.stringify(achadas);
-    if (txt.length < 95000) cache.put('fotos', txt, CACHE_SEG);
+    if (txt.length < 95000) cache.put('midias_v2', txt, CACHE_SEG);
   } catch (e) {}
 
   return achadas;
 }
 
 
+/** 'imagem', 'video', 'audio' ou null se for um arquivo que nao interessa. */
+function tipoDe(mime) {
+  if (!mime) return null;
+  if (mime.indexOf('image/') === 0) return 'imagem';
+  if (mime.indexOf('video/') === 0) return 'video';
+  if (mime.indexOf('audio/') === 0) return 'audio';
+  return null;
+}
+
+
+/**
+ * Nome sem extensao, sem acentos de caixa e sem os sufixos que o Drive e o
+ * Windows grudam em copia: "foto (1).jpg", "foto - Copia.jpg", "foto copy.jpg".
+ * Serve so para reconhecer duplicadas.
+ */
+function chaveNome(nome) {
+  return String(nome)
+    .toLowerCase()
+    .replace(/\.[a-z0-9]+$/, '')
+    .replace(/[\s_-]*\(\d+\)\s*$/, '')
+    .replace(/[\s_-]*(c[oó]pia( de)?|copy|copia)\s*$/, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+
 /**
  * Percorre uma pasta e, recursivamente, tudo que estiver dentro dela.
- * As URLs das imagens sao montadas no navegador, a partir do id — assim
- * a resposta trafega menor e cabe no cache.
+ * As URLs sao montadas no navegador a partir do id: a resposta trafega
+ * menor e cabe no cache.
  */
-function varrer(pasta, caminho, nivel, achadas, arquivosVistos, pastasVistas) {
+function varrer(pasta, caminho, nivel, achadas, arquivosVistos, pastasVistas, conteudoVisto) {
   var idPasta = pasta.getId();
   if (pastasVistas[idPasta]) return;
   pastasVistas[idPasta] = true;
@@ -92,15 +131,30 @@ function varrer(pasta, caminho, nivel, achadas, arquivosVistos, pastasVistas) {
   var arqs = pasta.getFiles();
   while (arqs.hasNext()) {
     var f = arqs.next();
-    if (f.getMimeType().indexOf('image/') !== 0) continue;
+    var tipo = tipoDe(f.getMimeType());
+    if (!tipo) continue;
 
     var id = f.getId();
     if (arquivosVistos[id]) continue;
     arquivosVistos[id] = true;
 
+    var nome = f.getName();
+    var tamanho = 0;
+    try { tamanho = f.getSize(); } catch (e) {}
+
+    if (TIRAR_DUPLICADAS && tamanho > 0) {
+      var chave = DUPLICADA_SO_PELO_TAMANHO
+        ? tipo + '|' + tamanho
+        : tipo + '|' + tamanho + '|' + chaveNome(nome);
+      if (conteudoVisto[chave]) continue;
+      conteudoVisto[chave] = true;
+    }
+
     achadas.push({
       id: id,
-      nome: f.getName(),
+      nome: nome,
+      tipo: tipo,
+      tamanho: tamanho,
       pasta: caminho,
       criado: f.getDateCreated().getTime()
     });
@@ -115,7 +169,7 @@ function varrer(pasta, caminho, nivel, achadas, arquivosVistos, pastasVistas) {
       sub,
       caminho ? caminho + ' / ' + sub.getName() : sub.getName(),
       nivel + 1,
-      achadas, arquivosVistos, pastasVistas
+      achadas, arquivosVistos, pastasVistas, conteudoVisto
     );
   }
 }
@@ -124,7 +178,7 @@ function varrer(pasta, caminho, nivel, achadas, arquivosVistos, pastasVistas) {
 /**
  * Rode esta funcao UMA VEZ no editor (botao "Executar") para:
  *   - autorizar o acesso ao Drive;
- *   - conferir se o ID_PASTA esta certo e o que ele enxerga em cada subpasta.
+ *   - conferir o que ele enxerga: quantas fotos, videos, musicas e duplicadas.
  * O resultado aparece no painel "Registro de execucao".
  */
 function testar() {
@@ -135,42 +189,114 @@ function testar() {
   var t0 = new Date().getTime();
   var pasta = DriveApp.getFolderById(ID_PASTA);
   limparCache();
-  var fotos = listarFotos();
+  var itens = listarFotos();
   var seg = ((new Date().getTime() - t0) / 1000).toFixed(1);
 
   Logger.log('Pasta raiz: %s', pasta.getName());
-  Logger.log('Imagens encontradas: %s  (varredura em %s s)', fotos.length, seg);
+  Logger.log('Itens aproveitados: %s  (varredura em %s s)', itens.length, seg);
 
-  if (!fotos.length) {
-    Logger.log('ATENCAO: nenhuma imagem. ID errado, pasta vazia, ou so tem');
-    Logger.log('arquivos que nao sao imagem (PDF, video, atalho...).');
+  if (!itens.length) {
+    Logger.log('ATENCAO: nada encontrado. ID errado, pasta vazia, ou so tem');
+    Logger.log('arquivos que nao sao imagem/video/audio (PDF, atalho, doc...).');
     return;
   }
 
-  // quantas em cada subpasta
+  var porTipo = { imagem: 0, video: 0, audio: 0 };
   var porPasta = {};
-  for (var i = 0; i < fotos.length; i++) {
-    var p = fotos[i].pasta || '(raiz)';
-    porPasta[p] = (porPasta[p] || 0) + 1;
-  }
-  Logger.log('--- por pasta ---');
-  for (var nome in porPasta) Logger.log('%s  ->  %s foto(s)', nome, porPasta[nome]);
-
-  // quantas ja estao com o prefixo do selo de IA
   var ia = 0;
-  for (var j = 0; j < fotos.length; j++) {
-    if (fotos[j].nome.toUpperCase().indexOf('IA_') === 0) ia++;
+  for (var i = 0; i < itens.length; i++) {
+    porTipo[itens[i].tipo]++;
+    var p = itens[i].pasta || '(raiz)';
+    porPasta[p] = (porPasta[p] || 0) + 1;
+    if (itens[i].nome.toUpperCase().indexOf('IA_') === 0) ia++;
   }
-  Logger.log('--- selo de IA ---');
-  Logger.log('%s de 5 imagens com o prefixo IA_', ia);
 
-  Logger.log('--- amostra ---');
-  Logger.log('primeira: %s', fotos[0].nome);
-  Logger.log('ultima:   %s', fotos[fotos.length - 1].nome);
+  Logger.log('--- por tipo ---');
+  Logger.log('fotos: %s   videos: %s   musicas: %s',
+             porTipo.imagem, porTipo.video, porTipo.audio);
+
+  Logger.log('--- por pasta ---');
+  for (var nome in porPasta) Logger.log('%s  ->  %s item(ns)', nome, porPasta[nome]);
+
+  Logger.log('--- selo de IA ---');
+  Logger.log('%s de 5 arquivos com o prefixo IA_', ia);
+
+  conferirDuplicadas();
+}
+
+
+/**
+ * Diz QUAIS arquivos da pasta sao copias uns dos outros, sem filtrar nada.
+ * Use quando uma foto parecer repetir no slideshow: se aparecer aqui, a copia
+ * esta no Drive mesmo e vale apagar por la.
+ */
+function conferirDuplicadas() {
+  var achadas = [];
+  varrerCru(DriveApp.getFolderById(ID_PASTA), '', 0, achadas, {}, {});
+
+  var porTamanho = {}, porNome = {};
+  for (var i = 0; i < achadas.length; i++) {
+    var a = achadas[i];
+    if (a.tamanho > 0) {
+      (porTamanho[a.tamanho] = porTamanho[a.tamanho] || []).push(a);
+    }
+    var cn = chaveNome(a.nome);
+    (porNome[cn] = porNome[cn] || []).push(a);
+  }
+
+  Logger.log('--- duplicadas ---');
+  var achou = 0;
+  for (var t in porTamanho) {
+    var g = porTamanho[t];
+    if (g.length < 2) continue;
+    achou++;
+    var descr = [];
+    for (var j = 0; j < g.length; j++) {
+      descr.push((g[j].pasta || '(raiz)') + '/' + g[j].nome);
+    }
+    Logger.log('%s bytes, %s copias: %s', t, g.length, descr.join('  |  '));
+  }
+  if (!achou) {
+    Logger.log('nenhum arquivo repetido no Drive.');
+    Logger.log('Se ainda assim algo repetir na tela, o problema nao e a pasta.');
+  } else {
+    Logger.log('%s grupo(s) repetido(s). Com TIRAR_DUPLICADAS = true o', achou);
+    Logger.log('slideshow ja mostra so uma copia de cada.');
+  }
+}
+
+
+/** Igual ao varrer(), mas sem tirar duplicada nenhuma. So o conferirDuplicadas usa. */
+function varrerCru(pasta, caminho, nivel, achadas, arquivosVistos, pastasVistas) {
+  var idPasta = pasta.getId();
+  if (pastasVistas[idPasta]) return;
+  pastasVistas[idPasta] = true;
+
+  var arqs = pasta.getFiles();
+  while (arqs.hasNext()) {
+    var f = arqs.next();
+    if (!tipoDe(f.getMimeType())) continue;
+    var id = f.getId();
+    if (arquivosVistos[id]) continue;
+    arquivosVistos[id] = true;
+    var tam = 0;
+    try { tam = f.getSize(); } catch (e) {}
+    achadas.push({ nome: f.getName(), pasta: caminho, tamanho: tam });
+  }
+
+  if (!VARRER_SUBPASTAS || nivel >= PROFUNDIDADE_MAX) return;
+  var subs = pasta.getFolders();
+  while (subs.hasNext()) {
+    var sub = subs.next();
+    varrerCru(sub, caminho ? caminho + ' / ' + sub.getName() : sub.getName(),
+              nivel + 1, achadas, arquivosVistos, pastasVistas);
+  }
 }
 
 
 /** Limpa o cache, para forcar uma releitura imediata da pasta. */
 function limparCache() {
-  CacheService.getScriptCache().remove('fotos');
+  var c = CacheService.getScriptCache();
+  c.remove('midias_v2');
+  c.remove('fotos');   // chave da versao antiga
 }

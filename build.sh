@@ -23,12 +23,14 @@ rodape() {
   printf '%s\n' '</body>' '</html>'
 }
 
-# ---------------------------------------------------------------- web (Netlify)
+# ---------------------------------------------- web (GitHub Pages / Netlify)
 {
   cabeca "Slideshow"
   echo '<script src="config.js"></script>'
+  echo '<script>'; cat src/trilha.js;   echo '</script>'
+  echo '<script>'; cat src/midia.js;    echo '</script>'
   echo '<script>'; cat src/fonte-web.js; echo '</script>'
-  echo '<script>'; cat src/motor.js;     echo '</script>'
+  echo '<script>'; cat src/motor.js;    echo '</script>'
   rodape
 } > web/index.html
 
@@ -37,6 +39,7 @@ rodape() {
   cabeca "Slideshow (offline)"
   echo '<script src="config.js"></script>'
   echo '<script src="lista.js"></script>'
+  echo '<script>'; cat src/trilha.js;        echo '</script>'
   echo '<script>'; cat src/fonte-offline.js; echo '</script>'
   echo '<script>'; cat src/motor.js;         echo '</script>'
   rodape
@@ -46,6 +49,8 @@ rodape() {
 {
   cabeca "Slideshow"
   echo '<script>'; cat src/config-appsscript.js; echo '</script>'
+  echo '<script>'; cat src/trilha.js;            echo '</script>'
+  echo '<script>'; cat src/midia.js;             echo '</script>'
   echo '<script>'; cat src/fonte-appsscript.js;  echo '</script>'
   echo '<script>'; cat src/motor.js;             echo '</script>'
   rodape

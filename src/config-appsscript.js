@@ -1,17 +1,28 @@
 /* Ajustes do slideshow (versao Apps Script).
    O ID da pasta do Drive NAO fica aqui - fica no Codigo.gs, na constante ID_PASTA. */
 window.CFG = {
-  titulo: 'Fotos da turma',   // aparece na tela inicial
-  segundos: 7,                // tempo de cada foto na tela
-  fade: 1500,                 // crossfade em ms (so no avanco automatico)
-  atualizarACada: 180,        // reconsulta a pasta a cada X segundos (0 desliga)
-  novasNaFrente: true,        // foto recem-enviada entra logo depois da atual
-  embaralhar: true,           // ordem aleatoria
-  pularMenu: false,           // true = abre direto no slideshow, sem tela inicial
-  baixarTudo: true,           // baixa todas as imagens de cara, para nao depender da conexao
+  titulo: 'Fotos da turma',
+  segundos: 3,                // tempo de cada FOTO (o video usa a duracao dele)
+  fade: 1200,
+  embaralhar: true,           // ordem aleatoria, sem repetir ate passar por todas
+  pularMenu: false,
+
+  incluirVideos: true,
+  maxSegundosVideo: 0,
+  segundosVideo: 30,
+
+  musica: false,
+  volume: 0.35,
+  musicaUrl: '',
+
+  atualizarACada: 180,
+  novasNaFrente: true,
+  baixarTudo: true,
   baixarDeCadaVez: 4,
+
   mostrarNome: false,
   mostrarContador: true,
   prefixoIA: 'IA_',
-  tituloSelo: 'processada com IA'
+  tituloSelo: 'processada com IA',
+  lembrarAjustes: true
 };

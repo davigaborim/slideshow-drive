@@ -1,4 +1,4 @@
-/* Fonte das fotos para a versao hospedada (Netlify / GitHub Pages).
+/* Fonte dos arquivos para a versao hospedada (GitHub Pages / Netlify).
 
    Dois modos, escolhidos pelo config.js:
 
@@ -6,21 +6,19 @@
       Nao precisa de chave de API. Usa <script> (JSONP), entao nao esbarra em CORS.
 
    B) so CFG.apiKey preenchido           -> fala direto com a API do Drive.
+
+   Devolve imagens, videos e audios. Quem separa por tipo e o motor.
 */
 
 var MIME_PASTA = 'application/vnd.google-apps.folder';
 var contadorJsonp = 0;
 
-function montarUrls(f) {
-  return {
-    id: f.id,
-    nome: f.nome || f.name,
-    pasta: f.pasta || '',
-    criado: f.criado || 0,
-    url: 'https://lh3.googleusercontent.com/d/' + f.id + '=w2048',
-    urlThumb: 'https://lh3.googleusercontent.com/d/' + f.id + '=w400',
-    urlAlt: 'https://drive.google.com/thumbnail?id=' + f.id + '&sz=w2048'
-  };
+function tipoDoMime(mime) {
+  if (!mime) return null;
+  if (mime.indexOf('image/') === 0) return 'imagem';
+  if (mime.indexOf('video/') === 0) return 'video';
+  if (mime.indexOf('audio/') === 0) return 'audio';
+  return null;
 }
 
 function carregarFotos() {
@@ -43,7 +41,14 @@ function viaAppsScript() {
   return new Promise(function (res, rej) {
     var nome = '__slide_cb_' + (++contadorJsonp);
     var s = document.createElement('script');
-    var t = setTimeout(function () { limpa(); rej(new Error('o Apps Script nao respondeu em 25s')); }, 25000);
+    var t = setTimeout(function () {
+      limpa();
+      rej(new Error(
+        'o Apps Script respondeu, mas nao com a lista de arquivos. Quase sempre e ' +
+        'implantacao velha: abra o script, Implantar > Gerenciar implantacoes > ' +
+        'lapis > Versao: Nova versao > Implantar. A URL /exec continua a mesma.'
+      ));
+    }, 25000);
 
     function limpa() {
       clearTimeout(t);
@@ -53,7 +58,7 @@ function viaAppsScript() {
 
     window[nome] = function (dados) {
       limpa();
-      res((dados || []).map(montarUrls));
+      res((dados || []).map(montarMidia));
     };
     s.onerror = function () {
       limpa();
@@ -71,9 +76,18 @@ function viaAppsScript() {
 
 function viaApiDrive() {
   var fila = [{ id: CFG.pastaId, caminho: '', nivel: 0 }];
-  var pastasVistas = {}, arquivosVistos = {}, achadas = [];
+  var pastasVistas = {}, arquivosVistos = {}, conteudoVisto = {}, achadas = [];
   var maxNivel = (CFG.profundidadeMax === undefined) ? 8 : CFG.profundidadeMax;
   var varrerSub = (CFG.varrerSubpastas === undefined) ? true : CFG.varrerSubpastas;
+  var tirarDup = (CFG.tirarDuplicadas === undefined) ? true : CFG.tirarDuplicadas;
+
+  function chaveNome(nome) {
+    return String(nome).toLowerCase()
+      .replace(/\.[a-z0-9]+$/, '')
+      .replace(/[\s_-]*\(\d+\)\s*$/, '')
+      .replace(/[\s_-]*(c[oó]pia( de)?|copy|copia)\s*$/, '')
+      .replace(/\s+/g, ' ').trim();
+  }
 
   function proxima() {
     if (!fila.length) return Promise.resolve();
@@ -96,14 +110,29 @@ function viaApiDrive() {
           continue;
         }
 
-        if (f.mimeType.indexOf('image/') !== 0) continue;
+        var tipo = tipoDoMime(f.mimeType);
+        if (!tipo) continue;
         if (arquivosVistos[f.id]) continue;
         arquivosVistos[f.id] = true;
 
-        var item = montarUrls(f);
-        item.pasta = atual.caminho;
-        item.criado = Date.parse(f.createdTime) || 0;
-        achadas.push(item);
+        var tam = parseInt(f.size, 10) || 0;
+        if (tirarDup && tam > 0) {
+          // md5Checksum e o jeito certo quando a API entrega; senao, tamanho + nome
+          var chave = f.md5Checksum
+            ? 'md5|' + f.md5Checksum
+            : tipo + '|' + tam + '|' + chaveNome(f.name);
+          if (conteudoVisto[chave]) continue;
+          conteudoVisto[chave] = true;
+        }
+
+        achadas.push(montarMidia({
+          id: f.id,
+          nome: f.name,
+          tipo: tipo,
+          tamanho: tam,
+          pasta: atual.caminho,
+          criado: Date.parse(f.createdTime) || 0
+        }));
       }
       return proxima();
     });
@@ -123,7 +152,7 @@ function viaApiDrive() {
   });
 }
 
-/* Lista tudo que esta dentro de uma pasta (imagens e subpastas), paginando. */
+/* Lista tudo que esta dentro de uma pasta, paginando. */
 function listarPasta(idPasta) {
   var q = "'" + idPasta + "' in parents and trashed = false";
   var out = [];
@@ -132,7 +161,7 @@ function listarPasta(idPasta) {
     var u = 'https://www.googleapis.com/drive/v3/files'
       + '?q=' + encodeURIComponent(q)
       + '&key=' + encodeURIComponent(CFG.apiKey)
-      + '&fields=' + encodeURIComponent('nextPageToken,files(id,name,mimeType,createdTime)')
+      + '&fields=' + encodeURIComponent('nextPageToken,files(id,name,mimeType,createdTime,size,md5Checksum)')
       + '&orderBy=createdTime'
       + '&pageSize=1000'
       + '&supportsAllDrives=true&includeItemsFromAllDrives=true'

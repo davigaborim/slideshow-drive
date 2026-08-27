@@ -17,8 +17,6 @@ body.tela-slideshow #palco{display:block}
 #palco{position:fixed;inset:0;background:#000}
 .camada{
   position:absolute;inset:0;
-  width:100%;height:100%;
-  object-fit:contain;
   opacity:0;
   transition:opacity var(--fade,1500ms) ease-in-out;
   will-change:opacity;
@@ -26,6 +24,17 @@ body.tela-slideshow #palco{display:block}
 .camada.ativa{opacity:1}
 /* troca manual (setas/clique): sem transicao nenhuma */
 .camada.instantaneo{transition:none}
+
+.camada > img,.camada > video,.camada > iframe{
+  position:absolute;inset:0;
+  width:100%;height:100%;
+  border:0;background:#000;
+  display:none;
+}
+.camada > img,.camada > video{object-fit:contain}
+.camada.mostra-img > img{display:block}
+.camada.mostra-video > video{display:block}
+.camada.mostra-iframe > iframe{display:block}
 
 #selo{
   position:fixed;top:28px;left:28px;
@@ -110,25 +119,26 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 #menu{
   position:fixed;inset:0;
   flex-direction:column;align-items:center;justify-content:center;
-  gap:0;padding:40px;text-align:center;
+  gap:0;padding:34px 40px;text-align:center;
+  overflow-y:auto;
   background:
     radial-gradient(1100px 620px at 50% -12%, #1b1b21 0%, #0a0a0c 62%, #000 100%);
 }
 #menu .marca{
-  font-size:clamp(28px,4.6vw,50px);
+  font-size:clamp(26px,4.2vw,46px);
   font-weight:600;letter-spacing:-.022em;line-height:1.1;
   background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,.62));
   -webkit-background-clip:text;background-clip:text;
   -webkit-text-fill-color:transparent;color:#fff;
 }
 #menu .conta{
-  margin-top:14px;
+  margin-top:13px;
   font-size:13.5px;letter-spacing:.04em;
   color:rgba(255,255,255,.42);
   font-variant-numeric:tabular-nums;
 }
 #menu .botoes{
-  margin-top:46px;
+  margin-top:38px;
   display:flex;gap:16px;flex-wrap:wrap;justify-content:center;
 }
 .bt{
@@ -150,9 +160,90 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 .bt .sub{font-size:12.5px;color:rgba(255,255,255,.42);letter-spacing:.01em}
 .bt.principal .sub{color:rgba(0,0,0,.5)}
 #menu .rodape{
-  margin-top:44px;
+  margin-top:26px;
   font-size:12px;letter-spacing:.04em;
   color:rgba(255,255,255,.26);
+}
+
+/* ------------------------------------------------------------ ajustes */
+#ajustes{
+  margin-top:30px;width:100%;max-width:556px;
+  padding:6px 20px 14px;
+  background:rgba(255,255,255,.028);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:14px;
+  text-align:left;
+}
+#ajustes .linha{
+  display:flex;align-items:center;justify-content:space-between;gap:16px;
+  padding:11px 0;
+  border-bottom:1px solid rgba(255,255,255,.055);
+}
+#ajustes .linha:last-of-type{border-bottom:0}
+#ajustes .rot{
+  font-size:13px;letter-spacing:.01em;
+  color:rgba(255,255,255,.62);white-space:nowrap;
+}
+#ajustes .ctrl{display:flex;align-items:center;gap:10px}
+
+/* stepper do tempo */
+.passo{
+  width:27px;height:27px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.13);
+  border-radius:8px;
+  color:rgba(255,255,255,.8);
+  font:inherit;font-size:15px;line-height:1;
+  cursor:pointer;transition:background .15s,border-color .15s;
+}
+.passo:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.26)}
+.passo:disabled{opacity:.3;cursor:default}
+#ajustes .val{
+  min-width:38px;text-align:center;
+  font-size:13.5px;font-variant-numeric:tabular-nums;
+  color:#fff;
+}
+
+/* botoes segmentados */
+.seg{
+  display:inline-flex;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.11);
+  border-radius:9px;
+  overflow:hidden;
+}
+.seg button{
+  padding:6px 13px;
+  background:transparent;border:0;
+  color:rgba(255,255,255,.5);
+  font:inherit;font-size:12.5px;letter-spacing:.01em;
+  cursor:pointer;transition:background .15s,color .15s;
+}
+.seg button:hover{color:rgba(255,255,255,.85)}
+.seg button.on{background:rgba(255,255,255,.9);color:#0b0b0d;font-weight:550}
+
+#volume{
+  -webkit-appearance:none;appearance:none;
+  width:92px;height:3px;border-radius:3px;
+  background:rgba(255,255,255,.18);
+  outline:none;cursor:pointer;
+  transition:opacity .2s;
+}
+#volume:disabled{opacity:.25;cursor:default}
+#volume::-webkit-slider-thumb{
+  -webkit-appearance:none;appearance:none;
+  width:13px;height:13px;border-radius:50%;
+  background:#fff;cursor:pointer;
+}
+#volume::-moz-range-thumb{
+  width:13px;height:13px;border:0;border-radius:50%;
+  background:#fff;cursor:pointer;
+}
+#ajustes .nota{
+  padding-top:9px;
+  font-size:11.5px;line-height:1.55;
+  color:rgba(255,255,255,.3);
 }
 
 /* =============================================================== galeria */
@@ -231,6 +322,19 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
   color:#8ef0bb;
   backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
 }
+/* video na grade: simbolo de play no centro */
+.cel .play{
+  position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  width:42px;height:42px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(8,8,10,.6);
+  border:1px solid rgba(255,255,255,.3);
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);
+  font-size:14px;color:#fff;padding-left:3px;
+  pointer-events:none;
+}
+.cel.video{background:#101014}
 #grade .vazio{
   grid-column:1/-1;padding:60px 0;text-align:center;
   font-size:13px;color:rgba(255,255,255,.34);
@@ -275,6 +379,8 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 }
 #toast.on{opacity:1;transform:translate(-50%,0)}
 
+#trilha{display:none}
+
 @media (max-width:640px){
   #selo{top:16px;left:16px;font-size:12px}
   #dica{display:none}
@@ -282,4 +388,5 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
   .bt{width:100%;max-width:330px}
   #grade{grid-template-columns:repeat(auto-fill,minmax(128px,1fr));gap:7px}
   #galeria{padding:70px 12px 40px}
+  #ajustes .linha{flex-direction:column;align-items:flex-start;gap:8px}
 }

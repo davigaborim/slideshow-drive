@@ -11,7 +11,9 @@ if (-not (Test-Path $dir)) {
     New-Item -ItemType Directory -Path $dir | Out-Null
 }
 
-$ext = @('.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.avif')
+$ext = @('.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.avif',
+         '.mp4', '.m4v', '.mov', '.webm', '.ogv',
+         '.mp3', '.m4a', '.aac', '.ogg', '.wav')
 
 # -Recurse: o ZIP do Drive vem com as subpastas dentro, e elas contam
 $arquivos = @(
