@@ -367,9 +367,12 @@ body.tela-slideshow #selo.on ~ #bt-voltar{top:76px}
 #aviso h1{font-size:15px;font-weight:500;letter-spacing:.02em;color:rgba(255,255,255,.72)}
 #aviso p{font-size:13px;line-height:1.65;color:rgba(255,255,255,.42);max-width:620px}
 #aviso code{
+  display:inline-block;
   font-family:ui-monospace,"Cascadia Code",Consolas,monospace;
-  font-size:12px;background:rgba(255,255,255,.07);
-  padding:2px 6px;border-radius:4px;color:rgba(255,255,255,.7);
+  font-size:12px;line-height:1.7;background:rgba(255,255,255,.07);
+  padding:10px 14px;border-radius:8px;color:rgba(255,255,255,.7);
+  /* a mensagem de erro vem com quebras de linha: elas contam */
+  white-space:pre-line;text-align:left;max-width:100%;
 }
 #aviso.erro .giro{display:none}
 
@@ -854,18 +857,25 @@ function carregarFotos() {
 
 /* ------------------------------------------------- A) via Apps Script (JSONP) */
 
+/* As duas maneiras de dar errado aqui levam ao mesmo lugar quase sempre:
+   a implantacao publicada e mais velha que o Codigo.gs. Vale gastar tres
+   linhas dizendo o caminho exato, em vez de deixar so "deu erro". */
+function RECADO(oQueAconteceu) {
+  return [
+    'O Apps Script ' + oQueAconteceu + '. As causas, em ordem de chance:',
+    '',
+    '1. A implantacao esta velha. No editor do script: Implantar > Gerenciar ' +
+    'implantacoes > lapis > Versao: Nova versao > Implantar. A URL /exec nao muda.',
+    '2. Em "Quem pode acessar" nao esta como Qualquer pessoa.',
+    '3. A URL /exec no config.js esta errada.'
+  ].join('\n');
+}
+
 function viaAppsScript() {
   return new Promise(function (res, rej) {
     var nome = '__slide_cb_' + (++contadorJsonp);
     var s = document.createElement('script');
-    var t = setTimeout(function () {
-      limpa();
-      rej(new Error(
-        'o Apps Script respondeu, mas nao com a lista de arquivos. Quase sempre e ' +
-        'implantacao velha: abra o script, Implantar > Gerenciar implantacoes > ' +
-        'lapis > Versao: Nova versao > Implantar. A URL /exec continua a mesma.'
-      ));
-    }, 25000);
+    var t = setTimeout(function () { limpa(); rej(new Error(RECADO('demorou mais de 25 s para responder'))); }, 25000);
 
     function limpa() {
       clearTimeout(t);
@@ -879,7 +889,7 @@ function viaAppsScript() {
     };
     s.onerror = function () {
       limpa();
-      rej(new Error('nao consegui chamar o Apps Script — confira a URL /exec e se o acesso esta como "Qualquer pessoa"'));
+      rej(new Error(RECADO('respondeu, mas nao com a lista de arquivos')));
     };
 
     var u = CFG.endpointAppsScript;
@@ -1918,8 +1928,9 @@ function listarPasta(idPasta) {
       .catch(function (e) {
         console.error(e);
         if (primeira) {
-          aviso('Não consegui ler a pasta do Drive',
-            '<code>' + String(e && e.message ? e.message : e).slice(0, 400) + '</code>', true);
+          var txt = String(e && e.message ? e.message : e).slice(0, 900)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;');
+          aviso('Não consegui ler a pasta do Drive', '<code>' + txt + '</code>', true);
         }
         // ja estava rodando: ignora e continua com o que tem
       });
