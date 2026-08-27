@@ -4,6 +4,15 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Uma virgula fora do lugar em src/ so apareceria como tela preta no navegador.
+# Melhor descobrir aqui.
+if command -v node >/dev/null 2>&1; then
+  for j in src/*.js; do
+    node --check "$j" || { echo "ERRO de sintaxe em $j - nada foi gerado"; exit 1; }
+  done
+  echo "sintaxe ok"
+fi
+
 cabeca() {  # $1 = titulo
   printf '%s\n' \
     '<!doctype html>' \
@@ -57,6 +66,7 @@ rodape() {
 } > apps-script/index.html
 
 echo "gerado:"
+
 for f in web/index.html offline/index.html apps-script/index.html; do
   printf '  %-26s %s bytes\n' "$f" "$(wc -c < "$f" | tr -d ' ')"
 done

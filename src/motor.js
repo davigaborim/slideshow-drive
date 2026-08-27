@@ -913,8 +913,9 @@
       .catch(function (e) {
         console.error(e);
         if (primeira) {
-          aviso('Não consegui ler a pasta do Drive',
-            '<code>' + String(e && e.message ? e.message : e).slice(0, 400) + '</code>', true);
+          var txt = String(e && e.message ? e.message : e).slice(0, 900)
+            .replace(/&/g, '&amp;').replace(/</g, '&lt;');
+          aviso('Não consegui ler a pasta do Drive', '<code>' + txt + '</code>', true);
         }
         // ja estava rodando: ignora e continua com o que tem
       });

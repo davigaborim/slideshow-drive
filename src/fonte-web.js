@@ -37,18 +37,25 @@ function carregarFotos() {
 
 /* ------------------------------------------------- A) via Apps Script (JSONP) */
 
+/* As duas maneiras de dar errado aqui levam ao mesmo lugar quase sempre:
+   a implantacao publicada e mais velha que o Codigo.gs. Vale gastar tres
+   linhas dizendo o caminho exato, em vez de deixar so "deu erro". */
+function RECADO(oQueAconteceu) {
+  return [
+    'O Apps Script ' + oQueAconteceu + '. As causas, em ordem de chance:',
+    '',
+    '1. A implantacao esta velha. No editor do script: Implantar > Gerenciar ' +
+    'implantacoes > lapis > Versao: Nova versao > Implantar. A URL /exec nao muda.',
+    '2. Em "Quem pode acessar" nao esta como Qualquer pessoa.',
+    '3. A URL /exec no config.js esta errada.'
+  ].join('\n');
+}
+
 function viaAppsScript() {
   return new Promise(function (res, rej) {
     var nome = '__slide_cb_' + (++contadorJsonp);
     var s = document.createElement('script');
-    var t = setTimeout(function () {
-      limpa();
-      rej(new Error(
-        'o Apps Script respondeu, mas nao com a lista de arquivos. Quase sempre e ' +
-        'implantacao velha: abra o script, Implantar > Gerenciar implantacoes > ' +
-        'lapis > Versao: Nova versao > Implantar. A URL /exec continua a mesma.'
-      ));
-    }, 25000);
+    var t = setTimeout(function () { limpa(); rej(new Error(RECADO('demorou mais de 25 s para responder'))); }, 25000);
 
     function limpa() {
       clearTimeout(t);
@@ -62,7 +69,7 @@ function viaAppsScript() {
     };
     s.onerror = function () {
       limpa();
-      rej(new Error('nao consegui chamar o Apps Script — confira a URL /exec e se o acesso esta como "Qualquer pessoa"'));
+      rej(new Error(RECADO('respondeu, mas nao com a lista de arquivos')));
     };
 
     var u = CFG.endpointAppsScript;
